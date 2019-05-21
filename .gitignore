@@ -1,0 +1,18 @@
+.DS_Store
+*.pyc
+
+db.sqlite3
+env
+
+orders/__pycache__
+orders/migrations
+
+# Django 
+*.log
+local_settings.py
+db.sqlite3
+
+# Environments
+.env
+.venv
+env/
