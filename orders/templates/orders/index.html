@@ -1,0 +1,15 @@
+{%extends "orders/base.html" %}
+
+{% block title %}
+    orders
+{% endblock %}
+
+{% block body %}
+    <ul>
+        {% for topping in toppings %}
+        <li>
+            {{topping}}
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
