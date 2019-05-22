@@ -7,12 +7,6 @@ class Toppings(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-class dinnerSizes(models.Model):
-    size = models.CharField(max_length=10)
-
-    def __str__(self):
-        return f"{self.size}"
-
 class dinnerTypes(models.Model):
     name = models.CharField(max_length=64)
 
@@ -21,12 +15,12 @@ class dinnerTypes(models.Model):
 
 class Food(models.Model):
     name = models.CharField(max_length=64)
-    size = models.ForeignKey(dinnerSizes, on_delete=models.CASCADE)
-    price = models.FloatField()
+    priceOfSmall = models.FloatField()
+    priceOfLarge = models.FloatField()
     foodType = models.ForeignKey(dinnerTypes, on_delete=models.CASCADE, related_name="type")
 
     def __str__(self):
-        if self.size == dinnerSizes.objects.get(size="NULL"):
-            return f"{self.name} Type: {self.foodType} - ${self.price}"
+        if self.foodType == dinnerTypes.objects.get(name="Salads") or self.foodType == dinnerTypes.objects.get(name="Pasta"):
+            return f"{self.name} Type: {self.foodType} - ${self.priceOfSmall:.2f}"
         else:
-            return f"{self.name} Type: {self.foodType} Size: {self.size} - ${self.price}"
+            return f"{self.name} Small: ${self.priceOfSmall:.2f}  Large: ${self.priceOfLarge:.2f}"
