@@ -5,29 +5,35 @@
 {% endblock %}
 
 {% block body %}
+    <h1>Food</h1>
+        <ul>
+            {% for food in foods %}
+            <li>
+                {{food}}
+            </li>
+            {% endfor %}
+        </ul>
+        <h1>Salads</h1>
+        <ul>
+            {% for salad in salads %}
+            <li>
+                {{salad}}
+            </li>
+            {% endfor %}
+        </ul>
+        <h1>Pasta</h1>
+        <ul>
+            {% for pasta in pastas %}
+            <li>
+                {{pasta}}
+            </li>
+            {% endfor %}
+        </ul>
     <h1>Toppings</h1>
     <ul>
         {% for topping in toppings %}
         <li>
             {{topping}}
-        </li>
-        {% endfor %}
-    </ul>
-
-    <h1>Salads</h1>
-    <ul>
-        {% for salad in salads %}
-        <li>
-            {{salad}}
-        </li>
-        {% endfor %}
-    </ul>
-
-    <h1>Pasta</h1>
-    <ul>
-        {% for pasta in pastas %}
-        <li>
-            {{pasta}}
         </li>
         {% endfor %}
     </ul>
