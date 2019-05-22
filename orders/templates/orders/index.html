@@ -5,98 +5,102 @@
 {% endblock %}
 
 {% block body %}
-    <h1>Pizza</h1>
-        <h2>Regular Pizza</h2>
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Small</th>
-                    <th>Large</th>
-                </tr>
-                {% for reg in regpizzas %}
-                    <tr>
-                        <td style="padding-right: 5px;">{{reg.name}}</td>
-                        <td>${{reg.priceOfSmall|floatformat:2}}</td>
-                        <td>{{reg.priceOfLarge|floatformat:2}}</td>
-                        <td><button>Add to Cart</button></td>
-                    </tr>
-                {% endfor %} 
-            </table>
-        <h2>Sicilian Pizza</h2>
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Small</th>
-                    <th>Large</th>
-                </tr>
-                {% for sic in sicpizzas %}
-                    <tr>
-                        <td style="padding-right: 5px;">{{sic.name}}</td>
-                        <td>${{sic.priceOfSmall|floatformat:2}}</td>
-                        <td>{{sic.priceOfLarge|floatformat:2}}</td>
-                    </tr>
-                {% endfor %} 
-            </table>
-        <h1>Salads</h1>
-        <ul>
-            {% for salad in salads %}
-            <li>
-                {{salad}}
-            </li>
-            {% endfor %}
-        </ul>
-        <h1>Pasta</h1>
-        <ul>
-            {% for pasta in pastas %}
-            <li>
-                {{pasta}}
-            </li>
-            {% endfor %}
-        </ul>
-        <h1>Subs</h1>
+<p>Currently logged in as: {{ user.username }}</p>
+<a href="{% url 'logout' %}">Logout</a>
+<a href="{% url 'cart' %}">Shopping Cart</a>
+<h1>Pizza</h1>
+    <h2>Regular Pizza</h2>
         <table>
             <tr>
                 <th>Name</th>
                 <th>Small</th>
                 <th>Large</th>
             </tr>
-            {% for sub in subs %}
+            {% for reg in regpizzas %}
                 <tr>
-                    <td style="padding-right: 5px;">{{sub.name}}</td>
-                    <td>${{sub.priceOfSmall|floatformat:2}}</td>
-                    <td>{{sub.priceOfLarge|floatformat:2}}</td>
-                </tr>
-            {% endfor %}
-
-        </table>
-        <!-- <ul>
-            {% for sub in subs %}
-            <li>
-                {{sub}}
-            </li>
-            {% endfor %}
-        </ul> -->
-        <h1>Dinner Platters</h1>
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Small</th>
-                <th>Large</th>
-            </tr>
-            {% for dinnerPlatter in dinnerPlatters %}
-                <tr>
-                    <td style="padding-right: 5px;">{{dinnerPlatter.name}}</td>
-                    <td>${{dinnerPlatter.priceOfSmall|floatformat:2}}</td>
-                    <td>{{dinnerPlatter.priceOfLarge|floatformat:2}}</td>
+                    <td style="padding-right: 5px;">{{reg.name}}</td>
+                    <td>${{reg.priceOfSmall|floatformat:2}}</td>
+                    <td>{{reg.priceOfLarge|floatformat:2}}</td>
+                    <td><button>Add to Cart</button></td>
                 </tr>
             {% endfor %} 
         </table>
-    <h1>Toppings</h1>
+    <h2>Sicilian Pizza</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Small</th>
+                <th>Large</th>
+            </tr>
+            {% for sic in sicpizzas %}
+                <tr>
+                    <td style="padding-right: 5px;">{{sic.name}}</td>
+                    <td>${{sic.priceOfSmall|floatformat:2}}</td>
+                    <td>{{sic.priceOfLarge|floatformat:2}}</td>
+                    <td><button>Add to Cart</button></td>
+                </tr>
+            {% endfor %} 
+        </table>
+    <h1>Salads</h1>
     <ul>
-        {% for topping in toppings %}
+        {% for salad in salads %}
         <li>
-            {{topping}}
+            {{salad}}
         </li>
         {% endfor %}
     </ul>
+    <h1>Pasta</h1>
+    <ul>
+        {% for pasta in pastas %}
+        <li>
+            {{pasta}}
+        </li>
+        {% endfor %}
+    </ul>
+    <h1>Subs</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Small</th>
+            <th>Large</th>
+        </tr>
+        {% for sub in subs %}
+            <tr>
+                <td style="padding-right: 5px;">{{sub.name}}</td>
+                <td>${{sub.priceOfSmall|floatformat:2}}</td>
+                <td>{{sub.priceOfLarge|floatformat:2}}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+    <!-- <ul>
+        {% for sub in subs %}
+        <li>
+            {{sub}}
+        </li>
+        {% endfor %}
+    </ul> -->
+    <h1>Dinner Platters</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Small</th>
+            <th>Large</th>
+        </tr>
+        {% for dinnerPlatter in dinnerPlatters %}
+            <tr>
+                <td style="padding-right: 5px;">{{dinnerPlatter.name}}</td>
+                <td>${{dinnerPlatter.priceOfSmall|floatformat:2}}</td>
+                <td>{{dinnerPlatter.priceOfLarge|floatformat:2}}</td>
+            </tr>
+        {% endfor %} 
+    </table>
+<h1>Toppings</h1>
+<ul>
+    {% for topping in toppings %}
+    <li>
+        {{topping}}
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %}
