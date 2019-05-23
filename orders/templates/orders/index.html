@@ -1,7 +1,7 @@
 {%extends "orders/base.html" %}
 
 {% block title %}
-    orders
+    Menu
 {% endblock %}
 
 {% block body %}
@@ -12,7 +12,7 @@
     <h2>Regular Pizza</h2>
     <ul>
         {% for reg in regpizzas %}
-            <li>{{ reg}} 
+            <li>{{reg}} 
             </li> 
 
         {% endfor %} 
@@ -53,6 +53,10 @@
         {% for salad in salads %}
         <li>
             {{salad}}
+            <form action="{% url 'add_to_cart' salad.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" value="Add to cart" />
+                </form>
         </li>
         {% endfor %}
     </ul>
@@ -60,35 +64,37 @@
     <ul>
         {% for pasta in pastas %}
         <li>
-            {{pasta}}
+            {{pasta }}
+            <form action="{% url 'add_to_cart' pasta.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Add to cart" />
+            </form>
         </li>
         {% endfor %}
     </ul>
     <h1>Subs</h1>
-    <table>
-        <tr>
-            <th>Name</th>
-            <th>Small</th>
-            <th>Large</th>
-        </tr>
-        {% for sub in subs %}
-            <tr>
-                <td style="padding-right: 5px;">{{sub.name}}</td>
-                <td>${{sub.priceOfSmall|floatformat:2}}</td>
-                <td>{{sub.priceOfLarge|floatformat:2}}</td>
-            </tr>
-        {% endfor %}
-
-    </table>
-    <!-- <ul>
-        {% for sub in subs %}
-        <li>
-            {{sub}}
-        </li>
-        {% endfor %}
-    </ul> -->
+        <ul>
+            {% for sub in subs %}
+            <li>
+                {{sub}}
+                <form action="{% url 'add_to_cart' sub.id %}" method="post">
+                        {% csrf_token %}
+                        <input type="submit" value="Add to cart" />
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
     <h1>Dinner Platters</h1>
-    <table>
+    <ul>
+        {% for dinnerPlatter in dinnerPlatters %}
+            <li>{{dinnerPlatter}}</li>
+            <form action="{% url 'add_to_cart' dinnerPlatter.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" value="Add to cart" />
+            </form>
+        {% endfor %} 
+    </ul>
+    <!-- <table>
         <tr>
             <th>Name</th>
             <th>Small</th>
@@ -101,7 +107,7 @@
                 <td>{{dinnerPlatter.priceOfLarge|floatformat:2}}</td>
             </tr>
         {% endfor %} 
-    </table>
+    </table> -->
 <h1>Toppings</h1>
 <ul>
     {% for topping in toppings %}

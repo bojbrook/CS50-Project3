@@ -42,10 +42,32 @@ class Food(models.Model):
         else:
             return f"{self.name} Small: ${self.priceOfSmall:.2f}  Large: ${self.priceOfLarge:.2f}"
 
+
+class menu_item(models.Model):
+    SIZES = (
+        ('S', 'Small'),
+        ('L', 'Large'),
+    )
+    FOOD_TYPES = {
+        ('DP', 'Dinner Platters'),
+        ('SA', 'Salads'),
+        ('PA', 'Pasta'),
+        ('SU', 'Subs'),
+        ('SP', 'Sicilian Pizza'),
+        ('RP', 'Regular Pizza'),
+    }
+    name = models.CharField(max_length=64)
+    price = models.FloatField()
+    item_type = models.CharField(max_length=2, choices=FOOD_TYPES)
+    item_size = models.CharField(max_length=2, choices=SIZES, blank=True)
+
+    def __str__(self):
+        return f"{self.name}: {self.get_item_type_display()} {self.item_size} - ${self.price:.2f}"
+
 class shoppingCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     total =  models.FloatField(default=0.0)
-    Items = models.ManyToManyField(Food)
+    Items = models.ManyToManyField(menu_item)
 
     def __str__(self):
         return f"{self.user} - ${self.total:.2f}"
