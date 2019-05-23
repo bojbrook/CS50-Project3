@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from .models import Toppings, Food, dinnerTypes, shoppingCart,Pizza, menu_item
+from .models import Toppings, Food, dinnerTypes, shoppingCart,Pizza, menu_item, Order
 
 # Create your views here.
 def index(request):
@@ -57,6 +57,18 @@ def cart_view(request):
         "cart": shopping_cart
     }
     return render(request,"orders/cart.html",context)
+
+def user_orders_view(request):
+    current_user = request.user
+    try:
+        orders = Order.objects.filter(user=current_user)
+    except Order.DoesNotExist:
+        return render(request, "orders/error.html", {"message": "No Orders."})
+
+    context = {
+        "orders": orders
+    }
+    return render(request,"orders/orders.html",context)
 
 # function to add item to cart
 def add_to_cart(request, menu_item_id):

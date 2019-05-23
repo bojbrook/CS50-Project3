@@ -1,0 +1,15 @@
+{%extends "orders/base.html" %}
+
+{% block title %}
+    Orders
+{% endblock %}
+
+{% block body%}
+    <h1>Orders</h1>
+    <a href="{% url 'index' %}">Menu</a>
+    <ul>
+        {% for order in orders %}
+            <li>{{ order }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

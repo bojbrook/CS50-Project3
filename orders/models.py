@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from datetime import datetime    
+
 # Create your models here.
 class Toppings(models.Model):
     name = models.CharField(max_length=64)
@@ -71,3 +73,15 @@ class shoppingCart(models.Model):
 
     def __str__(self):
         return f"{self.user} - ${self.total:.2f}"
+
+
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    order_time = models.DateTimeField(default=datetime.now)
+    is_completed = models.BooleanField(default=False)
+    order_price = models.FloatField()
+    order_items = models.ManyToManyField(menu_item)
+
+
+    def __str__(self):
+        return f"{self.user} - ${self.order_price} @ {self.order_time} Completed: {self.is_completed}"
