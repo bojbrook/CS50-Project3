@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 
 from .models import Toppings, Food, dinnerTypes, shoppingCart,Pizza, menu_item, Order
+from datetime import datetime    
 
 # Create your views here.
 def index(request):
@@ -40,19 +41,26 @@ def logout_view(request):
     return render(request, "orders/login.html", {"message": "Logged out."})
 
 # VIEW FOR THE SHOPPING CART
-def cart_view(request):
-    
+def cart_view(request):  
     current_user = request.user
-    shopping_cart = shoppingCart.objects.filter(user=current_user)
-    
+    try:
+        shopping_cart = shoppingCart.objects.filter(user=current_user)
+    except shoppingCart.DoesNotExist:
+        shopping_cart = shoppingCart(user= current_user, total = 0.0)
+        shopping_cart.save()
+    # creating new shopping cart
+    if not shopping_cart:
+        shopping_cart = shoppingCart(user= current_user, total = 0.0)
+        shopping_cart.save()
     # updating the price for the cart
-    cart_price = 0
-    for item in shopping_cart:
-        for food in item.Items.all():
+    else:
+        shopping_cart = shopping_cart[0]
+        cart_price = 0
+        for food in shopping_cart.Items.all():
             cart_price += food.price
-    shopping_cart[0].total = cart_price
-    shopping_cart[0].save()
-    
+        shopping_cart.total = cart_price
+        shopping_cart.save()
+
     context= {
         "cart": shopping_cart
     }
@@ -102,3 +110,21 @@ def remove_from_cart(request, menu_item_id):
     print(new_cart)
     # shopping_cart[0].Items.add(item)
     return HttpResponseRedirect(reverse("cart"))
+
+def submit_order(request, shopping_cart_id):
+    print("submitting your order")
+    current_user = request.user
+    try:
+        cart = shoppingCart.objects.get(pk=shopping_cart_id)
+    except shoppingCart.DoesNotExist:
+        return render(request, "orders/error.html", {"message": "No Order."})
+    print (cart.Items.all())
+    order = Order(user=current_user, order_price=cart.total)
+    order.save()
+    order.order_items.set(cart.Items.all())
+
+    # deleting the shopping cart
+    cart.delete()
+    
+    
+    return HttpResponseRedirect(reverse("index"))

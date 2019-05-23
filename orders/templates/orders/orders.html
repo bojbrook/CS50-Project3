@@ -10,6 +10,9 @@
     <ul>
         {% for order in orders %}
             <li>{{ order }}</li>
+        {% empty %}
+            <li> No Orders</li>
         {% endfor %}
+        
     </ul>
 {% endblock %}

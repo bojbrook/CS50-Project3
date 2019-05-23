@@ -7,21 +7,19 @@
 {% block body %}
     <h1> {{ user.username }} Shopping Cart</h1>
     <a href="{% url 'index' %}">Menu</a>
-    <ul>
-        {%for sc in cart %}
-            <li>{{ sc }}</li>  
+   
+    <h3>{{ cart }}</h3>  
 
-                {%for item in sc.Items.all %}
-                <p>{{ item }}</p>
-                    <form action="{% url 'remove_from_cart' item.id %}" method="post">
-                        {% csrf_token %}
-                        <input type="submit" value="Remove" />
-                    </form>
-                {% endfor %}
-            
-        {% endfor %} 
-    </ul>
-    <form>
+        {%for item in cart.Items.all %}
+        <p>{{ item }}</p>
+            <form action="{% url 'remove_from_cart' item.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Remove" />
+            </form>
+        {% endfor %}
+    
+    <form action="{% url 'submit_order' cart.id %}" method="post">
+        {% csrf_token %}
         <button>Submit order</button>
     </form>
 {% endblock %}
