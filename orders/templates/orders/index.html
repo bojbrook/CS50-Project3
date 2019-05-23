@@ -10,7 +10,14 @@
 <a href="{% url 'cart' %}">Shopping Cart</a>
 <h1>Pizza</h1>
     <h2>Regular Pizza</h2>
-        <table>
+    <ul>
+        {% for reg in regpizzas %}
+            <li>{{ reg}} 
+            </li> 
+
+        {% endfor %} 
+    </ul>
+        <!-- <table>
             <tr>
                 <th>Name</th>
                 <th>Small</th>
@@ -24,7 +31,7 @@
                     <td><button>Add to Cart</button></td>
                 </tr>
             {% endfor %} 
-        </table>
+        </table> -->
     <h2>Sicilian Pizza</h2>
         <table>
             <tr>

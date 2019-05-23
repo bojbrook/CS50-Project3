@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 class Toppings(models.Model):
@@ -6,6 +7,22 @@ class Toppings(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+class Pizza(models.Model):
+    PIZZA_SIZES = (
+        ('S', 'Small'),
+        ('L', 'Large'),
+    )
+    name = models.CharField(max_length=64)
+    pizza_size = models.CharField(max_length=1, choices=PIZZA_SIZES)
+    toppings = models.ManyToManyField(Toppings,blank=True)
+    pizza_price = models.FloatField()
+
+    def __str__(self):
+        str_toppings = ""
+        for items in self.toppings.all():
+            str_toppings += items.name + " - "
+        return f"{self.name}: {str_toppings} {self.pizza_size}  - ${self.pizza_price}"
 
 class dinnerTypes(models.Model):
     name = models.CharField(max_length=64)
@@ -24,3 +41,11 @@ class Food(models.Model):
             return f"{self.name} Type: {self.foodType} - ${self.priceOfSmall:.2f}"
         else:
             return f"{self.name} Small: ${self.priceOfSmall:.2f}  Large: ${self.priceOfLarge:.2f}"
+
+class shoppingCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    total =  models.FloatField(default=0.0)
+    Items = models.ManyToManyField(Food)
+
+    def __str__(self):
+        return f"{self.user} - ${self.total:.2f}"

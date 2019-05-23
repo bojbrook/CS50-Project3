@@ -5,6 +5,19 @@
 {% endblock %}
 
 {% block body %}
-    <h1>Shopping Cart</h1>
+    <h1> {{ user.username }} Shopping Cart</h1>
     <a href="{% url 'index' %}">Menu</a>
+    <ul>
+        {%for sc in cart %}
+            <li>{{ sc }}</li>  
+            
+                {%for item in sc.Items.all %}
+                    <p>{{ item }}</p>
+                {% endfor %}
+            
+        {% endfor %} 
+    </ul>
+    <form>
+        <button>Submit order</button>
+    </form>
 {% endblock %}
