@@ -17,4 +17,8 @@
         <input name="password" type="password"/>
         <input type="submit" value="Login"/>
     </form>
+    <form action="{% url 'register' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="Register"/>
+    </form>
 {% endblock %}

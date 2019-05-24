@@ -34,11 +34,28 @@ def login_view(request):
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
-        return render(request, "users/login.html", {"message": "Invalid credentials."})
+        return render(request, "orders/login.html", {"message": "Invalid credentials."})
 
 def logout_view(request):
     logout(request)
     return render(request, "orders/login.html", {"message": "Logged out."})
+
+
+def register_view(request):
+    return render(request, "orders/register.html")
+
+def add_user(request):
+    email = request.POST["email"]
+    username = request.POST["username"]
+    password = request.POST["password"]
+    print("I am in the add user")
+    print(f"{email} - {username} password: {password}")
+    if User.objects.filter(username=username).exists():
+        print("already a user")
+        return HttpResponseRedirect(reverse("register"))
+
+    user = User.objects.create_user(username=username,email=email, password=password)
+    return HttpResponseRedirect(reverse("index"))
 
 # VIEW FOR THE SHOPPING CART
 def cart_view(request):  
