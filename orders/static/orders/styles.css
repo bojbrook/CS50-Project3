@@ -1,0 +1,11 @@
+body {
+    background-color: cyan;
+}
+
+.table_name {
+    font-weight: bold;
+}
+
+td{
+    padding: 10px;
+}

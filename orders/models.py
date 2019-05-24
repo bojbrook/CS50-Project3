@@ -82,6 +82,11 @@ class Order(models.Model):
     order_price = models.FloatField()
     order_items = models.ManyToManyField(menu_item)
 
+    def get_items_str(self):
+        items = ""
+        for item in self.order_items.all():
+            items += item.name + "\n"
+        return items
 
     def __str__(self):
         return f"{self.user} - ${self.order_price} @ {self.order_time} Completed: {self.is_completed}"

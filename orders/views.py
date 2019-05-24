@@ -86,10 +86,15 @@ def cart_view(request):
 def user_orders_view(request):
     current_user = request.user
     try:
-        orders = Order.objects.filter(user=current_user)
+        orders = Order.objects.filter(user=current_user).order_by('-order_time')
     except Order.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No Orders."})
-
+    for order in orders:
+        print(order.user.username)
+        items = ""
+        for item in order.order_items.all():
+            items += item.name + "-"
+        print(items)
     context = {
         "orders": orders
     }
