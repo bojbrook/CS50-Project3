@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from .models import Toppings, Food, dinnerTypes, shoppingCart,Pizza, menu_item, Order
+from .models import  shoppingCart, menu_item, Order,topping, Pizza,Salad, Pasta, Dinner_Platter, Sub, Food
 from datetime import datetime    
 
 # Create your views here.
@@ -12,15 +12,15 @@ def index(request):
     if not request.user.is_authenticated:
           return render(request, "orders/login.html", {"message": None})
     context = {
-        "toppings": Toppings.objects.all(),
-        "foods": Food.objects.all(),
-        "salads": menu_item.objects.filter(item_type="SA"),
+        "toppings": topping.objects.all().order_by("name"),
+        # "foods": Food.objects.all(),
+        "salads": Salad.objects.all(),
         # "regpizzas": Food.objects.filter(foodType=dinnerTypes.objects.get(name="Regular Pizza")),
-        "regpizzas": Pizza.objects.all(),
-        "sicpizzas": Food.objects.filter(foodType=dinnerTypes.objects.get(name="Sicilian Pizza")),
-        "pastas" : menu_item.objects.filter(item_type="PA"),
-        "subs" : menu_item.objects.filter(item_type="SU"),
-        "dinnerPlatters" : menu_item.objects.filter(item_type="DP")
+        # "regpizzas": Pizza.objects.all(),
+        # "sicpizzas": Food.objects.filter(foodType=dinnerTypes.objects.get(name="Sicilian Pizza")),
+        "pastas" : Pasta.objects.all(),
+        "subs" : Sub.objects.all(),
+        "dinnerPlatters" : Dinner_Platter.objects.all()
 
     }
     return render(request,"orders/index.html", context)
@@ -73,7 +73,7 @@ def cart_view(request):
     else:
         shopping_cart = shopping_cart[0]
         cart_price = 0
-        for food in shopping_cart.Items.all():
+        for food in shopping_cart.items.all():
             cart_price += food.price
         shopping_cart.total = cart_price
         shopping_cart.save()
@@ -100,34 +100,81 @@ def user_orders_view(request):
     }
     return render(request,"orders/orders.html",context)
 
+
+def create_pizza(request):
+    #Getting Items from POST
+    topping_1 = request.POST["topping1"]
+    topping_2 = request.POST["topping2"]
+    topping_3 = request.POST["topping3"]
+    order_size = request.POST["rb_size"]
+    
+    name_str= "Cheese"
+    count = 0
+    
+    if(topping_1 != "NONE"):
+        topping_item_1 = topping.objects.get(pk=topping_1)
+        name_str += " + " + topping_item_1.display_name
+        count+=1
+    if(topping_2 != "NONE"):
+        topping_item_2 = topping.objects.get(pk=topping_2)
+        name_str += " + " + topping_item_2.display_name
+        count+=1
+    if(topping_3 != "NONE"):
+        topping_item_3 = topping.objects.get(pk=topping_3)
+        name_str += " + " + topping_item_3.display_name
+        count+=1
+
+    # Creating the pizza
+    if(order_size == 'L'):
+        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="RP", price=17.45)
+    else:
+        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="RP", price=12.20)
+    p.set_price()
+    p.save()
+    if(count == 1):
+        p.toppings.add(topping_item_1)
+    elif count == 2:
+        p.toppings.add(topping_item_1,topping_item_2)
+    else:
+        p.toppings.add(topping_item_1,topping_item_2,topping_item_3)
+    print(p)  
+    p.save()
+    return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':p.id}))
+
 # function to add item to cart
-def add_to_cart(request, menu_item_id):
+def add_to_cart(request, food_id):
     print ("adding item to cart")
     try:
         current_user = request.user
-        item = menu_item.objects.get(pk=menu_item_id)
-        shopping_cart = shoppingCart.objects.filter(user=current_user)
+        item = Food.objects.get(pk=food_id)
+        print(item)
+        shopping_cart = shoppingCart.objects.filter(user=current_user).first()
     except menu_item.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
-    shopping_cart[0].Items.add(item)
+
+    if shopping_cart == None:
+        sc = shoppingCart(user=current_user)
+        sc.save()
+    shopping_cart = shoppingCart.objects.filter(user=current_user).first()
+    shopping_cart.items.add(item)
     return HttpResponseRedirect(reverse("index"))
 
 # function to remove item from cart
-def remove_from_cart(request, menu_item_id):
+def remove_from_cart(request, food_id):
     print ("removing item from cart")
     try:
         current_user = request.user
-        item = menu_item.objects.get(pk=menu_item_id)
-        shopping_cart = shoppingCart.objects.filter(user=current_user)[0]
+        item = Food.objects.get(pk=food_id)
+        shopping_cart = shoppingCart.objects.filter(user=current_user).first()
     except menu_item.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
 
-    new_cart = shopping_cart.Items.exclude(pk=menu_item_id)
-    shopping_cart.Items.set(new_cart)
+    new_cart = shopping_cart.items.exclude(pk=food_id)
+    shopping_cart.items.set(new_cart)
     # shopping_cart.save()
     print(new_cart)
     # shopping_cart[0].Items.add(item)
@@ -140,10 +187,10 @@ def submit_order(request, shopping_cart_id):
         cart = shoppingCart.objects.get(pk=shopping_cart_id)
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No Order."})
-    print (cart.Items.all())
+    print (cart.items.all())
     order = Order(user=current_user, order_price=cart.total)
     order.save()
-    order.order_items.set(cart.Items.all())
+    order.order_items.set(cart.items.all())
 
     # deleting the shopping cart
     cart.delete()

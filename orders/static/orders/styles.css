@@ -1,5 +1,5 @@
 body {
-    background-color: cyan;
+    background-color: lightgray;
 }
 
 .table_name {
@@ -9,3 +9,12 @@ body {
 td{
     padding: 10px;
 }
+
+.nav-link{
+    color: black;
+}
+
+.btn_remove{
+    left: 50px;
+}
+

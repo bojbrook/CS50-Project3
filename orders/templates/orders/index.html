@@ -5,43 +5,66 @@
 {% endblock %}
 
 {% block body %}
-<p>Currently logged in as: {{ user.username }}</p>
-<ul class="nav justify-content-end">
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'user_orders' %}">Orders</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'cart' %}">Shopping Cart</a>
-    </li>
-    <li class="nav-item ">
-       <a class="nav-link" href="{% url 'logout' %}">Logout</a>
-    </li>
-</ul>
+    <ul class="nav justify-content-end">
+        <li class="nav-item">
+                <a class="nav-link" href="{% url 'index' %}">Menu</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'user_orders' %}">Orders</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'cart' %}">Shopping Cart</a>
+        </li>
+        <li class="nav-item ">
+        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+        </li>
+    </ul>
+    <p>Currently logged in as: {{ user.username }}</p>
+
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+        <h1 class="display-4">Pinocchio's Pizza & Subs</h1>
+        <p class="lead">
+            74 Winthrop Street,Harvard Square <br>
+                (617)-876-4897</p>
+        </div>
+    </div>
 <h1>Pizza</h1>
     <h2>Regular Pizza</h2>
-    <ul>
-        {% for reg in regpizzas %}
-            <li>{{reg}} 
-            </li> 
+    <p>Cheese: </p>
+    <form action="{% url 'create_pizza' %}" method="post">
+        {% csrf_token %}
+        <label for="top#1">First Topping</label>
+        <select name="topping1">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <label for="top#2">Second Topping</label>
+        <select name="topping2">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <label for="top#3">Third Topping</label>
+        <select name="topping3">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <select name="type">
+                <option value="R">Regular</option>
+                <option value="S">Sicilian</option>
+        </select>
 
-        {% endfor %} 
-    </ul>
-    <h2>Sicilian Pizza</h2>
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Small</th>
-                <th>Large</th>
-            </tr>
-            {% for sic in sicpizzas %}
-                <tr>
-                    <td style="padding-right: 5px;">{{sic.name}}</td>
-                    <td>${{sic.priceOfSmall|floatformat:2}}</td>
-                    <td>${{sic.priceOfLarge|floatformat:2}}</td>
-                    <td><button>Add to Cart</button></td>
-                </tr>
-            {% endfor %} 
-        </table>
+        <input type="radio" checked=true name="rb_size" value="S"/> Small
+        <input type="radio" name="rb_size" value="L"/> Large
+
+        <input type="submit" value="Add to cart" />
+    </form>
     <h1>Salads</h1>
         <table>
             <tr>
@@ -93,7 +116,28 @@
             {% endfor %}
         </ul>
     <h1>Dinner Platters</h1>
-    <ul>
+        <table>
+            <tr>
+                <th> Name </th>
+                <th>Size</th>
+                <th> Price </th>
+            </tr>
+            {% for dinnerPlatter in dinnerPlatters %}
+            <tr>
+                <td class="table_name">{{ dinnerPlatter.name }}</td>
+                <td>{{dinnerPlatter.get_item_size_display}}</td>
+                <td> ${{ dinnerPlatter.price|floatformat:2 }}</td>
+                <td>
+                    <form action="{% url 'add_to_cart' dinnerPlatter.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" value="Add to cart" />
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+
+        </table>
+    <!-- <ul>
         {% for dinnerPlatter in dinnerPlatters %}
             <li>{{dinnerPlatter}}</li>
             <form action="{% url 'add_to_cart' dinnerPlatter.id %}" method="post">
@@ -101,13 +145,13 @@
                     <input type="submit" value="Add to cart" />
             </form>
         {% endfor %} 
-    </ul>
+    </ul> -->
 <h1>Toppings</h1>
-    <ul>
+    <ul class="list-group">
         {% for topping in toppings %}
-        <li>
-            {{topping}}
-        </li>
+            <li class="list-group-item">
+                {{topping}}
+            </li>
         {% endfor %}
     </ul>
 {% endblock %}

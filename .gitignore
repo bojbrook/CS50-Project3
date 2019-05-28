@@ -17,3 +17,7 @@ db.sqlite3
 .env
 .venv
 env/
+
+
+# temp files
+orders/cases.py
