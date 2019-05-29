@@ -105,12 +105,25 @@
         </table>
     <h1>Subs</h1>
         <ul>
-            {% for sub in subs %}
+            {% for sub in subs_no_toppings %}
+            <li>
+                <form action="{% url 'add_to_cart' sub.id %}" method="post">
+                        {{sub}} 
+                        {% csrf_token %}
+                        <input type="submit" value="Add to cart" />
+                </form>
+            </li>
+            {% endfor %}
+            {% for sub in subs_w_toppings %}
             <li>
                 {{sub}}
                 <form action="{% url 'add_to_cart' sub.id %}" method="post">
                         {% csrf_token %}
+                        {% for topping in sub_toppings %}
+                            <input  name="{{sub.get_unique_name}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50
+                        {% endfor %}
                         <input type="submit" value="Add to cart" />
+                        
                 </form>
             </li>
             {% endfor %}

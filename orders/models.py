@@ -29,9 +29,16 @@ class menu_item(models.Model):
 
 #################################################################
 
+class food_type(models.Model):
+    name = models.CharField(max_length=64, primary_key=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
 class topping(models.Model):
     name = models.CharField(max_length=64, primary_key=True)
     display_name = models.CharField(max_length=64)
+    item_type = models.ManyToManyField(food_type, blank=True)
 
     def __str__(self):
         return f"{self.display_name}"
@@ -110,11 +117,15 @@ class Sub(Food):
     )
     item_size = models.CharField(max_length=1, choices=SIZES)
     num_toppings = models.IntegerField(default=0)
+    extra_cheese = models.BooleanField(default=False)
 
     def get_price(self):
         if self.has_toppings == True:
             return self.price + (.5 * self.num_toppings)
         return self.price
+
+    def get_unique_name(self):
+        return self.item_size +"_" + topping
 
     def __str__(self):
         return f"{self.name}: {self.get_item_size_display()} ${self.price:.2f} "

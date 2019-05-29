@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from .models import  shoppingCart, menu_item, Order,topping, Pizza,Salad, Pasta, Dinner_Platter, Sub, Food
+from .models import  shoppingCart,Order,topping, Pizza, Salad, Pasta, Dinner_Platter, Sub, Food
 from datetime import datetime    
 
 # Create your views here.
@@ -13,13 +13,11 @@ def index(request):
           return render(request, "orders/login.html", {"message": None})
     context = {
         "toppings": topping.objects.all().order_by("name"),
-        # "foods": Food.objects.all(),
+        "sub_toppings": topping.objects.filter(item_type="Subs").all(),
         "salads": Salad.objects.all(),
-        # "regpizzas": Food.objects.filter(foodType=dinnerTypes.objects.get(name="Regular Pizza")),
-        # "regpizzas": Pizza.objects.all(),
-        # "sicpizzas": Food.objects.filter(foodType=dinnerTypes.objects.get(name="Sicilian Pizza")),
         "pastas" : Pasta.objects.all(),
-        "subs" : Sub.objects.all(),
+        "subs_no_toppings" : Sub.objects.exclude(has_toppings=True).all(),
+        "subs_w_toppings" : Sub.objects.exclude(has_toppings=False).all(),  
         "dinnerPlatters" : Dinner_Platter.objects.all()
 
     }
@@ -144,12 +142,13 @@ def create_pizza(request):
 # function to add item to cart
 def add_to_cart(request, food_id):
     print ("adding item to cart")
+
     try:
         current_user = request.user
         item = Food.objects.get(pk=food_id)
         print(item)
         shopping_cart = shoppingCart.objects.filter(user=current_user).first()
-    except menu_item.DoesNotExist:
+    except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
@@ -157,8 +156,19 @@ def add_to_cart(request, food_id):
     if shopping_cart == None:
         sc = shoppingCart(user=current_user)
         sc.save()
-    shopping_cart = shoppingCart.objects.filter(user=current_user).first()
-    shopping_cart.items.add(item)
+
+    # Checking if food is a sub
+    if(item.item_type == "SU"):
+        if(item.has_toppings == True):
+            sub_toppings = topping.objects.filter(item_type="Subs").all()
+            sub = Sub.objects.filter(name=item.name).first()
+            print(sub)
+            # getting all of the options for subs with toppings
+            for top in sub_toppings:
+                name = sub.item_size+ "_"+  top.name
+                print(request.POST[name])
+    # shopping_cart = shoppingCart.objects.filter(user=current_user).first()
+    # shopping_cart.items.add(item)
     return HttpResponseRedirect(reverse("index"))
 
 # function to remove item from cart
