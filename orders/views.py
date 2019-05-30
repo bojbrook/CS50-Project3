@@ -162,12 +162,12 @@ def add_to_cart(request, food_id):
         sc = shoppingCart(user=current_user)
         sc.save()
 
-    # Checking if food is a sub
+    # Checking if food is a sub and had toppings
     if(item.item_type == "SU"):
         if(item.has_toppings == True):
             num_toppings = 0
             sub_toppings = topping.objects.filter(item_type="Subs").all()
-            sub = Sub.objects.filter(name=item.name).first()
+            sub = Sub.objects.filter(pk=item.id).first()
             # getting all of the options for subs with toppings
             for top in sub_toppings:
                 input_name = sub.get_unique_name() + "_"+  top.display_name
@@ -181,9 +181,10 @@ def add_to_cart(request, food_id):
             sub.num_toppings = num_toppings
             sub.save()       
             # adding extra charge to the shopping cart
-            print(sub.get_extra_charge_total())
+            
             shopping_cart.extra_charge = sub.get_extra_charge_total()  
             shopping_cart.save() 
+            print(f"{sub.name} + extra: {sub.get_extra_charge_total()}")
             
     # shopping_cart = shoppingCart.objects.filter(user=current_user).first()
     shopping_cart.items.add(item)
@@ -205,7 +206,7 @@ def remove_from_cart(request, food_id):
 
     # checking if there are extra charges and removing them
     if shopping_cart.extra_charge > 0.0:
-        print("Got in here")
+        # checks it item is a sub
         if item.item_type == "SU":
             sub = Sub.objects.get(pk=item.id)
             num_toppinns = sub.num_toppings
@@ -215,7 +216,6 @@ def remove_from_cart(request, food_id):
     shopping_cart.items.set(new_cart)
     
     shopping_cart.save()
-    print(new_cart)
     return HttpResponseRedirect(reverse("cart"))
 
 def submit_order(request, shopping_cart_id):
