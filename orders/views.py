@@ -75,9 +75,14 @@ def cart_view(request):
             cart_price += food.price
         shopping_cart.total = cart_price
         shopping_cart.save()
+    
 
+    subs = shopping_cart.items.filter(item_type="SU").all()
+    for sub in subs:
+        print (sub)
     context= {
-        "cart": shopping_cart
+        "cart": shopping_cart,
+        "subs": shopping_cart.items.filter(item_type="SU").all()
     }
     return render(request,"orders/cart.html",context)
 
@@ -160,15 +165,30 @@ def add_to_cart(request, food_id):
     # Checking if food is a sub
     if(item.item_type == "SU"):
         if(item.has_toppings == True):
+            num_toppings = 0
             sub_toppings = topping.objects.filter(item_type="Subs").all()
             sub = Sub.objects.filter(name=item.name).first()
-            print(sub)
             # getting all of the options for subs with toppings
             for top in sub_toppings:
-                name = sub.item_size+ "_"+  top.name
-                print(request.POST[name])
+                input_name = sub.get_unique_name() + "_"+  top.display_name
+                try :
+                    sub.toppings.add(request.POST[input_name])
+                    num_toppings += 1
+                    
+                # Goes through the except if checkbox wasn't checked
+                except:
+                    pass
+            sub.num_toppings = num_toppings
+            sub.save()       
+            # adding extra charge to the shopping cart
+            print(sub.get_extra_charge_total())
+            shopping_cart.extra_charge = sub.get_extra_charge_total()  
+            shopping_cart.save() 
+            
     # shopping_cart = shoppingCart.objects.filter(user=current_user).first()
-    # shopping_cart.items.add(item)
+    shopping_cart.items.add(item)
+    
+     
     return HttpResponseRedirect(reverse("index"))
 
 # function to remove item from cart
@@ -183,11 +203,19 @@ def remove_from_cart(request, food_id):
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
 
+    # checking if there are extra charges and removing them
+    if shopping_cart.extra_charge > 0.0:
+        print("Got in here")
+        if item.item_type == "SU":
+            sub = Sub.objects.get(pk=item.id)
+            num_toppinns = sub.num_toppings
+            print(num_toppinns)
+            shopping_cart.extra_charge = (shopping_cart.extra_charge - (float)(num_toppinns*.50))
     new_cart = shopping_cart.items.exclude(pk=food_id)
     shopping_cart.items.set(new_cart)
-    # shopping_cart.save()
+    
+    shopping_cart.save()
     print(new_cart)
-    # shopping_cart[0].Items.add(item)
     return HttpResponseRedirect(reverse("cart"))
 
 def submit_order(request, shopping_cart_id):

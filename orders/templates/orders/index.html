@@ -120,8 +120,11 @@
                 <form action="{% url 'add_to_cart' sub.id %}" method="post">
                         {% csrf_token %}
                         {% for topping in sub_toppings %}
-                            <input  name="{{sub.get_unique_name}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50
+                            <input  name="{{sub.get_unique_name}}_{{topping}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50
                         {% endfor %}
+                        <!-- <input  name="{{subMushrooms" type="checkbox" value="Mushrooms"/> Mushrooms + $.50
+                        <input  name="Green_Peppers" type="checkbox" value="Green_Peppers"/> Green Peppers + $.50
+                        <input  name="Onions" type="checkbox" value="Onions"/> Onions + $.50 -->
                         <input type="submit" value="Add to cart" />
                         
                 </form>

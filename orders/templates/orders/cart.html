@@ -28,6 +28,10 @@
             <input type="submit" value="Remove" />
         </form>
     {% endfor %}
+
+    {% for sub in subs %}
+        {{sub}}
+    {% endfor %}
     
     <form action="{% url 'submit_order' cart.id %}" method="post">
         {% csrf_token %}

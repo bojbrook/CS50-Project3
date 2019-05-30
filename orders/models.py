@@ -108,7 +108,7 @@ class Pizza(Food):
 
 
     def __str__(self):
-        return f"{self.name} ${self.price:.2f} - {self.get_item_size_display()} {self.get_pizza_type_display()}"
+        return f"{self.get_item_type_display()} {self.name} ${self.price:.2f} - {self.get_item_size_display()} {self.get_pizza_type_display()}"
 
 class Sub(Food):
     SIZES = (
@@ -120,14 +120,26 @@ class Sub(Food):
     extra_cheese = models.BooleanField(default=False)
 
     def get_price(self):
-        if self.has_toppings == True:
-            return self.price + (.5 * self.num_toppings)
+        # if self.has_toppings == True:
+        #     return self.price + (.5 * self.num_toppings)
         return self.price
 
+    def get_extra_charge_total(self):
+        return .5 * self.num_toppings
+
     def get_unique_name(self):
-        return self.item_size +"_" + topping
+        return self.item_size +"_"+self.name
+
+    def get_toppings_str(self):
+        if(self.has_toppings):
+            items = ""
+            for item in self.toppings.all():
+                items += item.name + "-"
+            return items
 
     def __str__(self):
+        # if(self.has_toppings):
+        #     return f"{self.name}: {self.get_toppings_str()} {self.get_item_size_display()} ${self.get_price():.2f}"
         return f"{self.name}: {self.get_item_size_display()} ${self.price:.2f} "
 
 class Salad(Food):
@@ -155,6 +167,7 @@ class shoppingCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     total =  models.FloatField(default=0.0)
     items = models.ManyToManyField(Food)
+    extra_charge = models.FloatField(default=0.0)
 
 
     def set_total(self):
@@ -165,8 +178,13 @@ class shoppingCart(models.Model):
         self.total = count
         return count
 
+    def get_total(self):
+        total = self.set_total()
+        return total + self.extra_charge
+
+
     def __str__(self):
-        return f"{self.user} - ${self.set_total():.2f}"
+        return f"{self.user} - ${self.get_total():.2f}"
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
