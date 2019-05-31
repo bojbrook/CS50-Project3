@@ -43,9 +43,39 @@ class Food(models.Model):
     class Meta:
         abstract = False
 
-    def __str__(self):
-        return f"{self.display_name} - ${self.price:.2f}"
+    # returns specfic food item based on its id
+    def get_food(self):
+        if self.item_type == "PI":
+            return Pizza.objects.get(pk = self.id)
+        if self.item_type == "SU":
+            return Sub.objects.get(pk = self.id)
+        if self.item_type == "PA":
+            return Pasta.objects.get(pk = self.id)
+        if self.item_type == "SA":
+            return Salad.objects.get(pk = self.id)
+        if self.item_type == "DP":
+            return Dinner_Platter.objects.get(pk = self.id)
 
+    # prints out differnt strings for each food item
+    def food_print(self):
+        if self.item_type == "PI":
+            pizza = self.get_food()
+            return f"{self.get_item_type_display()} {self.display_name} ${self.price:.2f} - {pizza.get_item_size_display()} {pizza.get_pizza_type_display()}"
+        if self.item_type == "SU":
+            sub = self.get_food()
+            return f"{self.display_name}: {sub.get_item_size_display()} ${self.price:.2f} "
+        if self.item_type == "PA":
+            pasta = self.get_food()
+            return f"{self.name} ${self.price:.2f}"
+        if self.item_type == "SA":
+            salad = self.get_food()
+            return f"{self.name} ${self.price:.2f}"
+        if self.item_type == "DP":
+            platter = self.get_food()
+            return f"{self.display_name}: {platter.get_item_size_display()}  ${self.price:.2f}"
+        
+    def __str__(self):
+        return self.food_print()
 class Pizza(Food):
     SIZES = (
         ('S', 'Small'),
@@ -70,7 +100,6 @@ class Pizza(Food):
             if self.num_toppings == 2:
                 return self.price + 2.5
             return self.price + (1 * self.num_toppings) + (.5 * (int)(self.num_toppings/3))
-
 
     def __str__(self):
         return f"{self.get_item_type_display()} {self.name} ${self.price:.2f} - {self.get_item_size_display()} {self.get_pizza_type_display()}"
@@ -145,7 +174,6 @@ class shoppingCart(models.Model):
     def get_total(self):
         total = self.set_total()
         return total + self.extra_charge
-
 
     def __str__(self):
         return f"{self.user} - ${self.get_total():.2f}"

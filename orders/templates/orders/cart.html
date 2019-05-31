@@ -15,6 +15,53 @@
         </form>
     {% endfor %}
 
+    <!-- Pizza -->
+    <!-- <p>Pizza</p>
+    {%for pizza in cart_pizzas %}
+        <form action="{% url 'remove_from_cart' pizza.id %}" method="post">
+            {% csrf_token %}
+            {{ pizza.get_food}}
+            <input type="submit" value="Remove" />
+        </form>
+    {% endfor %} -->
+    <!-- Subs -->
+    <!-- <p>Subs</p>
+    {%for sub in cart_subs %}
+        <form action="{% url 'remove_from_cart' sub.id %}" method="post">
+            {% csrf_token %}
+            {{ sub}}
+            <input type="submit" value="Remove" />
+        </form>
+    {% endfor %}
+
+    <p>Pasta</p>
+    {%for pasta in cart_pasta %}
+        <form action="{% url 'remove_from_cart' pasta.id %}" method="post">
+            {% csrf_token %}
+            {{ pasta}}
+            <input type="submit" value="Remove" />
+        </form>
+    {% endfor %}
+
+    <p>Salad</p>
+    {%for salad in cart_salads %}
+        <form action="{% url 'remove_from_cart' salad.id %}" method="post">
+            {% csrf_token %}
+            {{ salad}}
+            <input type="submit" value="Remove" />
+        </form>
+    {% endfor %}
+
+    <p>Dinner Platter</p>
+    {%for platter in cart_dinner_platters %}
+        <form action="{% url 'remove_from_cart' platter.id %}" method="post">
+            {% csrf_token %}
+            {{ platter}}
+            <input type="submit" value="Remove" />
+        </form>
+    {% endfor %} -->
+
+
     
     <form action="{% url 'submit_order' cart.id %}" method="post">
         {% csrf_token %}

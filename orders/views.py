@@ -113,13 +113,19 @@ def cart_view(request):
         shopping_cart.total = cart_price
         shopping_cart.save()
     
+    
 
-    subs = shopping_cart.items.filter(item_type="SU").all()
-    for sub in subs:
-        print (sub)
+    pizza = shopping_cart.items.filter(item_type="PI").all()
+    print(pizza)
+    for p in pizza:
+        print (p.get_food())
     context= {
         "cart": shopping_cart,
-        "subs": shopping_cart.items.filter(item_type="SU").all()
+        "cart_subs": shopping_cart.items.filter(item_type="SU").all(),
+        "cart_pizzas": shopping_cart.items.filter(item_type="PI").all(),
+        "cart_salads": shopping_cart.items.filter(item_type="SA").all(),
+        "cart_pasta": shopping_cart.items.filter(item_type="PA").all(),
+        "cart_dinner_platters": shopping_cart.items.filter(item_type="DP").all(),
     }
     return render(request,"orders/cart.html",context)
 
@@ -166,16 +172,16 @@ def create_pizza(request):
 
     # Creating the pizza
     if(order_size == 'L'):
-        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="RP", price=17.45)
+        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="PI", price=17.45)
     else:
-        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="RP", price=12.20)
+        p = Pizza(name = name_str, display_name=name_str, item_size = order_size, num_toppings=count, item_type="PI", price=12.20)
     p.set_price()
     p.save()
     if(count == 1):
         p.toppings.add(topping_item_1)
     elif count == 2:
         p.toppings.add(topping_item_1,topping_item_2)
-    else:
+    elif count == 3:
         p.toppings.add(topping_item_1,topping_item_2,topping_item_3)
     print(p)  
     p.save()
@@ -222,7 +228,7 @@ def add_to_cart(request, food_id):
     try:
         current_user = request.user
         item = Food.objects.get(pk=food_id)
-        print(item)
+        # print(item)
         shopping_cart = shoppingCart.objects.filter(user=current_user).first()
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
