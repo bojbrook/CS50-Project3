@@ -1,0 +1,175 @@
+{%extends "orders/base.html" %}
+
+{% block title %}
+    Place Order
+{% endblock %}
+
+{% block body %}
+<h1>Place Order</h1>
+
+<h1>Pizza</h1>
+    <p>Cheese: </p>
+    <form action="{% url 'create_pizza' %}" method="post">
+        {% csrf_token %}
+        <label for="top#1">First Topping</label>
+        <select name="topping1">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <label for="top#2">Second Topping</label>
+        <select name="topping2">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <label for="top#3">Third Topping</label>
+        <select name="topping3">
+            <option value="NONE"> </option>
+            {% for topping in toppings %}
+                <option value={{topping.name}}>{{topping}}</option>
+            {% endfor %}
+        </select>
+        <select name="type">
+                <option value="R">Regular</option>
+                <option value="S">Sicilian</option>
+        </select>
+
+        <input type="radio" checked=true name="rb_size" value="S"/> Small
+        <input type="radio" name="rb_size" value="L"/> Large
+
+        <input type="submit" value="Add to cart" />
+    </form>
+
+    <h1>Subs</h1>
+        <!-- <form >
+            <select name="sub_name">
+                {% for sub in sub_names %}
+                    <option value="{{sub.name}}">{{sub.name}}</option>
+                {% endfor %}
+            </select>
+            <input type="radio" checked=true name="sub_size" value="S"/> Small
+            <input type="radio" name="sub_size" value="L"/> Large
+
+            <input type="checkbox"  name="cb_extra_cheese" /> Extra Cheese + $.50
+            <input type="submit" value="Add to cart" />
+        </form> -->
+
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+            </tr>
+            {% for sub in sub_no_topping %}
+            
+            <tr>
+                <form action="{% url 'create_sub' sub.name %}" method="post">
+                    {% csrf_token %}
+                    <td class="table_name"> {{sub.display_name}}</td>
+                    <td>
+                        <input type="radio" checked=true name="{{sub.name}}_size" value="S"/> Small
+                        <input type="radio" name="{{sub.name}}_size" value="L"/> Large
+                    </td>
+                    <td>
+                        <input type="checkbox" name="{{sub.name}}_extra_cheese"  /> Extra Cheese + $.50
+                    </td>
+                    <td>
+                        <input type="submit" value="Add to cart" />
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+
+            {% for sub in sub_w_topping %}
+            <tr>
+                <form >
+                    {% csrf_token %}
+                    <td class="table_name"> {{sub.display_name}}</td>
+                    <td>
+                        <input type="radio" checked=true name="{{sub.name}}_size" value="S"/> Small
+                        <input type="radio" name="{{sub.name}}_size" value="L"/> Large
+                    </td>
+                    <td>
+                        {% for topping in sub_toppings %}
+                            <input  name="{{sub.name}}_{{topping}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <input  name="{{sub.name}}_x_cheese" type="checkbox" /> Extra Cheese + $.50
+                    </td>
+                    <td>
+                        <input type="submit" value="Add to cart" />
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+
+        </table>
+
+    <h1>Pasta</h1>
+        <table>
+            <tr>
+                <th> Name </th>
+                <th> Price </th>
+            </tr>
+            {% for pasta in pastas %}
+            <tr>
+                <td class="table_name">{{ pasta.display_name }}</td>
+                <td> ${{ pasta.price|floatformat:2 }}</td>
+                <td>
+                    <form action="{% url 'add_to_cart' pasta.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" value="Add to cart" />
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    <h1>Salads</h1>
+        <table>
+            <tr>
+                <th> Name </th>
+                <th> Price </th>
+            </tr>
+            {% for salad in salads %}
+            <tr>
+                <td class="table_name">{{ salad.display_name }}</td>
+                <td> ${{ salad.price|floatformat:2 }}</td>
+                <td>
+                    <form action="{% url 'add_to_cart' salad.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" value="Add to cart" />
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    <h1>Dinner Platter</h1>
+        <table >
+            <tr>
+                <th >Name</th>
+                <th>Size</th>
+            </tr>
+            {% for platter in dinner_platters %}
+            <form action="{% url 'create_platter' platter.name %}" method="post">
+                    {% csrf_token %}
+                <tr>
+                    <td class="table_name">{{platter.display_name}}</td>
+                    <td>
+                            <input type="radio" checked=true name="{{platter.name}}_size" value="S"/> Small
+                            <input type="radio" name="{{platter.name}}_size" value="L"/> Large
+                    </td>
+                    <td>
+                            <input type="submit" value="Add to cart" />
+                    </td>
+                </tr>
+            </form>
+            {% endfor %}
+        </table>
+
+
+{% endblock %}

@@ -11,6 +11,31 @@ from datetime import datetime
 def index(request):
     if not request.user.is_authenticated:
           return render(request, "orders/login.html", {"message": None})
+
+    dinner_platters = Dinner_Platter.objects.all()
+    names = Dinner_Platter.objects.values('name').distinct()
+    temp = [] 
+    count = 0
+    for dp in names:
+        platter =  Dinner_Platter.objects.filter(name = dp['name'])
+        large = 0.0
+        small = 0.0
+        for plat in platter:
+            if plat.item_size == 'S':
+                small = plat.price
+            else:
+                large = plat.price
+        dick = {
+            'name': dp['name'],
+            'p_small': small,
+            'p_large': large
+        }
+        temp.append(dick)
+        count += 1
+        # print (f"Large: {large} Small: {small}")
+        # print (temp)
+
+
     context = {
         "toppings": topping.objects.all().order_by("name"),
         "sub_toppings": topping.objects.filter(item_type="Subs").all(),
@@ -18,8 +43,7 @@ def index(request):
         "pastas" : Pasta.objects.all(),
         "subs_no_toppings" : Sub.objects.exclude(has_toppings=True).all(),
         "subs_w_toppings" : Sub.objects.exclude(has_toppings=False).all(),  
-        "dinnerPlatters" : Dinner_Platter.objects.all()
-
+        "dinnerPlatters" : Dinner_Platter.objects.all(),
     }
     return render(request,"orders/index.html", context)
     
@@ -54,6 +78,19 @@ def add_user(request):
 
     user = User.objects.create_user(username=username,email=email, password=password)
     return HttpResponseRedirect(reverse("index"))
+
+# view for the place order page, where the user can add items to their cart
+def place_order(request):
+    context = {
+        "toppings": topping.objects.all().order_by("name"),
+        "sub_toppings": topping.objects.filter(item_type="Subs").all(),
+        "sub_no_topping": Sub.objects.exclude(has_toppings=True).values('name','display_name').distinct(),
+        "sub_w_topping": Sub.objects.exclude(has_toppings=False).values('name','display_name').distinct(),
+        "pastas" : Pasta.objects.all(),
+        "salads": Salad.objects.all(),
+        "dinner_platters": Dinner_Platter.objects.values('name','display_name').distinct()
+    }
+    return render(request,"orders/place_order.html", context)
 
 # VIEW FOR THE SHOPPING CART
 def cart_view(request):  
@@ -103,7 +140,7 @@ def user_orders_view(request):
     }
     return render(request,"orders/orders.html",context)
 
-
+# Creates a pizza from the place order page and adds it to the shopping cart
 def create_pizza(request):
     #Getting Items from POST
     topping_1 = request.POST["topping1"]
@@ -144,7 +181,41 @@ def create_pizza(request):
     p.save()
     return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':p.id}))
 
-# function to add item to cart
+# Creates a sub and toppings and add sit to the shopping cart
+def create_sub(request, sub_name):
+    size_str = str(sub_name+"_size")
+    x_cheese_str = str(sub_name+"_extra_cheese")
+    print(x_cheese_str)
+
+    # getting items from html form
+    size = request.POST[size_str]
+    x_cheese = request.POST.get(x_cheese_str)
+
+    
+
+
+    sub = Sub.objects.get(name=sub_name,item_size=size)
+    if(x_cheese == 'on'):
+        sub.extra_charge = True
+        sub.num_toppings = 1
+        sub.save()
+
+
+    print(sub)
+    return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
+
+# Creates a dinner platter and adds it to the shopping cart
+def create_platter(request, platter_name):
+    size_str = str(platter_name+"_size")
+    size = request.POST[size_str]
+    try:
+        platter = Dinner_Platter.objects.get(name=platter_name,item_size=size)
+    except Dinner_Platter.DoesNotExist:
+        return render(request, "orders/error.html", {"message": "No Platter."})
+    
+    return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':platter.id}))
+
+# function to add item to cart that don't require any special selection
 def add_to_cart(request, food_id):
     print ("adding item to cart")
 
@@ -164,33 +235,14 @@ def add_to_cart(request, food_id):
 
     # Checking if food is a sub and had toppings
     if(item.item_type == "SU"):
-        if(item.has_toppings == True):
-            num_toppings = 0
-            sub_toppings = topping.objects.filter(item_type="Subs").all()
-            sub = Sub.objects.filter(pk=item.id).first()
-            # getting all of the options for subs with toppings
-            for top in sub_toppings:
-                input_name = sub.get_unique_name() + "_"+  top.display_name
-                try :
-                    sub.toppings.add(request.POST[input_name])
-                    num_toppings += 1
-                    
-                # Goes through the except if checkbox wasn't checked
-                except:
-                    pass
-            sub.num_toppings = num_toppings
-            sub.save()       
-            # adding extra charge to the shopping cart
-            
-            shopping_cart.extra_charge = sub.get_extra_charge_total()  
-            shopping_cart.save() 
-            print(f"{sub.name} + extra: {sub.get_extra_charge_total()}")
-            
-    # shopping_cart = shoppingCart.objects.filter(user=current_user).first()
+        sub = Sub.objects.get(pk=food_id)
+        shopping_cart.extra_charge = sub.get_extra_charge_total()  
+        shopping_cart.save() 
+    
     shopping_cart.items.add(item)
     
      
-    return HttpResponseRedirect(reverse("index"))
+    return HttpResponseRedirect(reverse("place_order"))
 
 # function to remove item from cart
 def remove_from_cart(request, food_id):
@@ -218,6 +270,7 @@ def remove_from_cart(request, food_id):
     shopping_cart.save()
     return HttpResponseRedirect(reverse("cart"))
 
+# Submits a schopping cart order to an actual order
 def submit_order(request, shopping_cart_id):
     print("submitting your order")
     current_user = request.user

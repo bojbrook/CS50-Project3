@@ -3,7 +3,7 @@
 .vscode
 
 db.sqlite3
-env
+
 
 orders/__pycache__
 orders/migrations
