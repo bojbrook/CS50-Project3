@@ -5,66 +5,52 @@
 {% endblock %}
 
 {% block body %}
-    <h3>{{ cart }}</h3>  
-
-    {%for item in cart.items.all %}
-        <form action="{% url 'remove_from_cart' item.id %}" method="post">
+    <h3>{{ shopping_cart }}</h3>  
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Extra charge</th>
+                <th>Price</th>
+            </tr>
+            {%for food in cart %}
+                <tr>
+                    <td>{{food.item.get_item_type_display}}</td>
+                    <td>{{food.item.display_name}}</td>
+                    <td>{{food.item.get_food.get_item_size_display|default:"-"}}</td>
+                    
+                    {%for top in food.toppings%}
+                        <td>{{top.display_name}} + ${{top.price|floatformat:2}}</td>
+                    {%empty%}
+                        <td>-</td>
+                    {%endfor%}
+                    <td>${{food.price|floatformat:2}}</td>
+                    <!-- {% for top in toppings %}
+                        {% for food in top.food_items.all %}
+                            {%if item == food %}
+                                <td>{{top}}</td>
+                            {%endif%}
+                        {%endfor%}
+                    {%endfor%} -->
+                    <td>
+                        <form action="{% url 'remove_from_cart' food.item.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" value="Remove" />
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <!-- Form for submitting order -->
+        <form action="{% url 'submit_order' shopping_cart.id %}" method="post">
             {% csrf_token %}
-            {{ item }}
-            <input type="submit" value="Remove" />
+            <button class="btn_remove">Submit order</button>
         </form>
-    {% endfor %}
-
-    <!-- Pizza -->
-    <!-- <p>Pizza</p>
-    {%for pizza in cart_pizzas %}
-        <form action="{% url 'remove_from_cart' pizza.id %}" method="post">
-            {% csrf_token %}
-            {{ pizza.get_food}}
-            <input type="submit" value="Remove" />
-        </form>
-    {% endfor %} -->
-    <!-- Subs -->
-    <!-- <p>Subs</p>
-    {%for sub in cart_subs %}
-        <form action="{% url 'remove_from_cart' sub.id %}" method="post">
-            {% csrf_token %}
-            {{ sub}}
-            <input type="submit" value="Remove" />
-        </form>
-    {% endfor %}
-
-    <p>Pasta</p>
-    {%for pasta in cart_pasta %}
-        <form action="{% url 'remove_from_cart' pasta.id %}" method="post">
-            {% csrf_token %}
-            {{ pasta}}
-            <input type="submit" value="Remove" />
-        </form>
-    {% endfor %}
-
-    <p>Salad</p>
-    {%for salad in cart_salads %}
-        <form action="{% url 'remove_from_cart' salad.id %}" method="post">
-            {% csrf_token %}
-            {{ salad}}
-            <input type="submit" value="Remove" />
-        </form>
-    {% endfor %}
-
-    <p>Dinner Platter</p>
-    {%for platter in cart_dinner_platters %}
-        <form action="{% url 'remove_from_cart' platter.id %}" method="post">
-            {% csrf_token %}
-            {{ platter}}
-            <input type="submit" value="Remove" />
-        </form>
-    {% endfor %} -->
+    
+   
 
 
     
-    <form action="{% url 'submit_order' cart.id %}" method="post">
-        {% csrf_token %}
-        <button class="btn_remove">Submit order</button>
-    </form>
+    
 {% endblock %}

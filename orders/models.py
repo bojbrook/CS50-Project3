@@ -14,16 +14,6 @@ class food_type(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-class topping(models.Model):
-    name = models.CharField(max_length=64, primary_key=True)
-    display_name = models.CharField(max_length=64)
-    item_type = models.ManyToManyField(food_type, blank=True)
-
-
-    def __str__(self):
-        return f"{self.display_name}"
-
-
 # Base model for all the food types
 class Food(models.Model):
     FOOD_TYPES = {
@@ -38,12 +28,12 @@ class Food(models.Model):
     item_type = models.CharField(max_length=2, choices=FOOD_TYPES)
     price = models.FloatField()
     has_toppings = models.BooleanField(default=False)
-    toppings = models.ManyToManyField(topping,blank=True)
+    toppings = models.ManyToManyField("topping",blank=True)
 
     class Meta:
         abstract = False
 
-    # returns specfic food item based on its id
+    # returns specific food item based on its id
     def get_food(self):
         if self.item_type == "PI":
             return Pizza.objects.get(pk = self.id)
@@ -56,7 +46,7 @@ class Food(models.Model):
         if self.item_type == "DP":
             return Dinner_Platter.objects.get(pk = self.id)
 
-    # prints out differnt strings for each food item
+    # prints out different strings for each food item
     def food_print(self):
         if self.item_type == "PI":
             pizza = self.get_food()
@@ -73,9 +63,51 @@ class Food(models.Model):
         if self.item_type == "DP":
             platter = self.get_food()
             return f"{self.display_name}: {platter.get_item_size_display()}  ${self.price:.2f}"
-        
+
+    # return the price of the food with all of its toppings
+    def get_price(self):
+        if(self.item_type != "PI"):
+            topping_price = 0
+            for topping in self.toppings.all():
+                topping_price += topping.price
+            return self.price + topping_price
+        else:
+            return self.price
+   
     def __str__(self):
-        return self.food_print()
+        # return self.food_print()
+        return f"{self.name} ${self.price:.2f}"
+
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    is_completed = models.BooleanField(default=False)
+    order_price = models.FloatField(default=0.0)
+    order_items = models.ManyToManyField(Food)
+    has_paid = models.BooleanField(default=False)
+    
+    def get_items_str(self):
+        items = ""
+        for item in self.order_items.all():
+            items += item.name + "\n"
+        return items
+
+    def __str__(self):
+        return f"{self.user} - ${self.order_price:.2f}"
+
+class topping(models.Model):
+    name = models.CharField(max_length=64, primary_key=True)
+    display_name = models.CharField(max_length=64)
+    item_type = models.ManyToManyField(food_type, blank=True)
+    price = models.FloatField(default=0.50)
+    # Used for keeping track of where each topping is going
+    orders = models.ManyToManyField(Order,blank=True)
+    food_items = models.ManyToManyField(Food,blank=True)
+
+
+    def __str__(self):
+        return f"{self.display_name}"
+
 class Pizza(Food):
     SIZES = (
         ('S', 'Small'),
@@ -113,11 +145,6 @@ class Sub(Food):
     num_toppings = models.IntegerField(default=0)
     extra_cheese = models.BooleanField(default=False)
 
-    def get_price(self):
-        # if self.has_toppings == True:
-        #     return self.price + (.5 * self.num_toppings)
-        return self.price
-
     def get_extra_charge_total(self):
         return .5 * self.num_toppings
 
@@ -130,11 +157,11 @@ class Sub(Food):
             for item in self.toppings.all():
                 items += item.name + "-"
             return items
-
+   
     def __str__(self):
         # if(self.has_toppings):
         #     return f"{self.name}: {self.get_toppings_str()} {self.get_item_size_display()} ${self.get_price():.2f}"
-        return f"{self.display_name}: {self.get_item_size_display()} ${self.price:.2f} "
+        return f"{self.display_name}: {self.get_item_size_display()} ${self.get_price():.2f} "
 
 class Salad(Food):
 
@@ -154,6 +181,7 @@ class Dinner_Platter(Food):
     item_size = models.CharField(max_length=1, choices=SIZES)
 
     def __str__(self):
+
         return f"{self.display_name}: {self.get_item_size_display()}  ${self.price:.2f}"
 
 class shoppingCart(models.Model):
@@ -178,18 +206,6 @@ class shoppingCart(models.Model):
     def __str__(self):
         return f"{self.user} - ${self.get_total():.2f}"
 
-class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_time = models.DateTimeField(default=datetime.now)
-    is_completed = models.BooleanField(default=False)
-    order_price = models.FloatField()
-    order_items = models.ManyToManyField(Food)
 
-    def get_items_str(self):
-        items = ""
-        for item in self.order_items.all():
-            items += item.name + "\n"
-        return items
 
-    def __str__(self):
-        return f"{self.user} - ${self.order_price} @ {self.order_time} Completed: {self.is_completed}"
+

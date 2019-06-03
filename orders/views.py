@@ -47,7 +47,7 @@ def index(request):
     }
     return render(request,"orders/index.html", context)
     
-
+# VIEW FOR THE LOGIN PAGE
 def login_view(request):
     username = request.POST["username"]
     password = request.POST["password"]
@@ -58,14 +58,16 @@ def login_view(request):
     else:
         return render(request, "orders/login.html", {"message": "Invalid credentials."})
 
+# LOGS THE CURRENT USER
 def logout_view(request):
     logout(request)
     return render(request, "orders/login.html", {"message": "Logged out."})
 
-
+# VIEW FOR REGISTERING A NEW USER
 def register_view(request):
     return render(request, "orders/register.html")
 
+# ADDS A USER FROM register_view()
 def add_user(request):
     email = request.POST["email"]
     username = request.POST["username"]
@@ -81,6 +83,7 @@ def add_user(request):
 
 # view for the place order page, where the user can add items to their cart
 def place_order(request):
+
     context = {
         "toppings": topping.objects.all().order_by("name"),
         "sub_toppings": topping.objects.filter(item_type="Subs").all(),
@@ -96,43 +99,49 @@ def place_order(request):
 def cart_view(request):  
     current_user = request.user
     try:
-        shopping_cart = shoppingCart.objects.filter(user=current_user)
-    except shoppingCart.DoesNotExist:
-        shopping_cart = shoppingCart(user= current_user, total = 0.0)
+        shopping_cart = Order.objects.get(user=current_user,has_paid=False)
+        toppings = topping.objects.filter(orders=shopping_cart)
+        
+    except Order.DoesNotExist:
+        shopping_cart = Order(user=current_user)
         shopping_cart.save()
-    # creating new shopping cart
-    if not shopping_cart:
-        shopping_cart = shoppingCart(user= current_user, total = 0.0)
-        shopping_cart.save()
-    # updating the price for the cart
-    else:
-        shopping_cart = shopping_cart[0]
-        cart_price = 0
-        for food in shopping_cart.items.all():
-            cart_price += food.price
-        shopping_cart.total = cart_price
-        shopping_cart.save()
-    
+    except topping.DoesNotExist:
+        pass
+   
+    # Gatthering all of the toppings for a specific item
+    cart = []
+    for item in shopping_cart.order_items.all():
+        print(item)    
+        toppings_arr = []
+        item_topping = topping.objects.filter(orders=shopping_cart, food_items = item)
+        price = 0
+        for top in item_topping.all():
+            price += top.price
+        cart_items = {
+            'item': item,
+            "toppings":item_topping.all(),
+            "price": item.price + price
+            
+        }
+        cart.append(cart_items)
     
 
-    pizza = shopping_cart.items.filter(item_type="PI").all()
-    print(pizza)
-    for p in pizza:
-        print (p.get_food())
     context= {
-        "cart": shopping_cart,
-        "cart_subs": shopping_cart.items.filter(item_type="SU").all(),
-        "cart_pizzas": shopping_cart.items.filter(item_type="PI").all(),
-        "cart_salads": shopping_cart.items.filter(item_type="SA").all(),
-        "cart_pasta": shopping_cart.items.filter(item_type="PA").all(),
-        "cart_dinner_platters": shopping_cart.items.filter(item_type="DP").all(),
+        "shopping_cart": shopping_cart,
+        "cart": cart,
+        "toppings": toppings
+        # "cart_subs": shopping_cart.items.filter(item_type="SU").all(),
+        # "cart_pizzas": shopping_cart.items.filter(item_type="PI").all(),
+        # "cart_salads": shopping_cart.items.filter(item_type="SA").all(),
+        # "cart_pasta": shopping_cart.items.filter(item_type="PA").all(),
+        # "cart_dinner_platters": shopping_cart.items.filter(item_type="DP").all(),
     }
     return render(request,"orders/cart.html",context)
 
 def user_orders_view(request):
     current_user = request.user
     try:
-        orders = Order.objects.filter(user=current_user).order_by('-order_time')
+        orders = Order.objects.filter(user=current_user, has_paid=True).order_by('-created')
     except Order.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No Orders."})
     for order in orders:
@@ -172,7 +181,7 @@ def create_pizza(request):
 
     # Creating the pizza
     if(order_size == 'L'):
-        p = Pizza(name = name_str, item_size = order_size, num_toppings=count, item_type="PI", price=17.45)
+        p = Pizza(name = name_str, display_name=name_str,item_size = order_size, num_toppings=count, item_type="PI", price=17.45)
     else:
         p = Pizza(name = name_str, display_name=name_str, item_size = order_size, num_toppings=count, item_type="PI", price=12.20)
     p.set_price()
@@ -183,7 +192,7 @@ def create_pizza(request):
         p.toppings.add(topping_item_1,topping_item_2)
     elif count == 3:
         p.toppings.add(topping_item_1,topping_item_2,topping_item_3)
-    print(p)  
+ 
     p.save()
     return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':p.id}))
 
@@ -191,23 +200,21 @@ def create_pizza(request):
 def create_sub(request, sub_name):
     size_str = str(sub_name+"_size")
     x_cheese_str = str(sub_name+"_extra_cheese")
-    print(x_cheese_str)
 
     # getting items from html form
     size = request.POST[size_str]
     x_cheese = request.POST.get(x_cheese_str)
 
+    try:
+        sub = Sub.objects.get(name=sub_name,item_size=size)
+    except Sub.DoesNotExist:
+        return render(request, "orders/error.html", {"message": "Something went wrong with addint the sub."})
     
-
-
-    sub = Sub.objects.get(name=sub_name,item_size=size)
     if(x_cheese == 'on'):
-        sub.extra_charge = True
-        sub.num_toppings = 1
+        sub.extra_cheese = True
         sub.save()
 
-
-    print(sub)
+    # return HttpResponseRedirect(reverse("cart"))
     return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
 
 # Creates a dinner platter and adds it to the shopping cart
@@ -229,24 +236,33 @@ def add_to_cart(request, food_id):
         current_user = request.user
         item = Food.objects.get(pk=food_id)
         # print(item)
-        shopping_cart = shoppingCart.objects.filter(user=current_user).first()
+        shopping_cart = Order.objects.get(user=current_user,has_paid=False)
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
-    except shoppingCart.DoesNotExist:
-        return render(request, "orders/error.html", {"message": "No shopping cart."})
+    except Order.DoesNotExist:
+        shopping_cart = Order(user= current_user, order_price = 0.0, has_paid=False)
+        shopping_cart.save()
 
-    if shopping_cart == None:
-        sc = shoppingCart(user=current_user)
-        sc.save()
+    # if shopping_cart == None:
+    #     sc = shoppingCart(user=current_user)
+    #     sc.save()
 
     # Checking if food is a sub and had toppings
     if(item.item_type == "SU"):
         sub = Sub.objects.get(pk=food_id)
-        shopping_cart.extra_charge = sub.get_extra_charge_total()  
-        shopping_cart.save() 
+        if(sub.extra_cheese == True):
+            cheese_topping = topping.objects.get(name="Extra_Cheese")
+            cheese_topping.orders.add(shopping_cart)
+            cheese_topping.food_items.add(sub)
+            #add the extra price to the cart
+            shopping_cart.order_price += cheese_topping.price
+
+
     
-    shopping_cart.items.add(item)
-    
+
+    shopping_cart.order_items.add(item)
+    shopping_cart.order_price += item.price
+    shopping_cart.save()    
      
     return HttpResponseRedirect(reverse("place_order"))
 
@@ -256,23 +272,27 @@ def remove_from_cart(request, food_id):
     try:
         current_user = request.user
         item = Food.objects.get(pk=food_id)
-        shopping_cart = shoppingCart.objects.filter(user=current_user).first()
-    except menu_item.DoesNotExist:
+        shopping_cart = Order.objects.get(user=current_user,has_paid=False)
+    except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
-    except shoppingCart.DoesNotExist:
+    except Order.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
 
-    # checking if there are extra charges and removing them
-    if shopping_cart.extra_charge > 0.0:
-        # checks it item is a sub
-        if item.item_type == "SU":
-            sub = Sub.objects.get(pk=item.id)
-            num_toppinns = sub.num_toppings
-            print(num_toppinns)
-            shopping_cart.extra_charge = (shopping_cart.extra_charge - (float)(num_toppinns*.50))
-    new_cart = shopping_cart.items.exclude(pk=food_id)
-    shopping_cart.items.set(new_cart)
-    
+
+    # removing the toppings from the cart
+    try:
+        toppings = topping.objects.filter(orders=shopping_cart, food_items = item)
+        for top in toppings:
+            shopping_cart.order_price -= top.price
+            top.orders.remove(shopping_cart)
+            top.food_items.remove(item)
+        
+    except:
+        pass
+
+    new_cart = shopping_cart.order_items.exclude(pk=food_id)
+    shopping_cart.order_items.set(new_cart)
+    shopping_cart.order_price -= item.price
     shopping_cart.save()
     return HttpResponseRedirect(reverse("cart"))
 
@@ -281,16 +301,12 @@ def submit_order(request, shopping_cart_id):
     print("submitting your order")
     current_user = request.user
     try:
-        cart = shoppingCart.objects.get(pk=shopping_cart_id)
+        cart = Order.objects.get(pk=shopping_cart_id)
     except shoppingCart.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No Order."})
-    print (cart.items.all())
-    order = Order(user=current_user, order_price=cart.total)
-    order.save()
-    order.order_items.set(cart.items.all())
-
-    # deleting the shopping cart
-    cart.delete()
+    print (cart.order_items.all())
     
+    cart.has_paid = True
+    cart.save()
     
     return HttpResponseRedirect(reverse("index"))

@@ -17,7 +17,7 @@
         <tr>
             <td>{{order.get_items_str}}</td>
             <td>${{order.order_price|floatformat:2}}</td>
-            <td>{{order.order_time}}</td>
+            <td>{{order.created}}</td>
             <td>{{order.is_completed}}</td>
         </tr>
         {% endfor %}
