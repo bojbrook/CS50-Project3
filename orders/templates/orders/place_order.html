@@ -84,7 +84,7 @@
 
             {% for sub in sub_w_topping %}
             <tr>
-                <form >
+                <form action="{% url 'create_sub' sub.name %}" method="post">
                     {% csrf_token %}
                     <td class="table_name"> {{sub.display_name}}</td>
                     <td>
@@ -92,13 +92,13 @@
                         <input type="radio" name="{{sub.name}}_size" value="L"/> Large
                     </td>
                     <td>
-                        {% for topping in sub_toppings %}
-                            <input  name="{{sub.name}}_{{topping}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50
-                        {% endfor %}
-                    </td>
-                    <td>
                         <input  name="{{sub.name}}_x_cheese" type="checkbox" /> Extra Cheese + $.50
                     </td>
+                    {% for topping in sub_toppings %}
+                        <td>
+                            <input  name="{{sub.name}}_{{topping}}" type="checkbox" value="{{topping.name}}"/> {{topping.display_name}} + $.50</td>
+                        </td>
+                    {% endfor %}
                     <td>
                         <input type="submit" value="Add to cart" />
                     </td>

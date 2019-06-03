@@ -1,10 +1,9 @@
 from django.contrib import admin
 
-from .models import shoppingCart, Order, topping, Salad, Pasta, Dinner_Platter, Sub,food_type
+from .models import  Order, topping, Salad, Pasta, Dinner_Platter, Sub,food_type
 # Register your models here.
 
 admin.site.register(topping)
-admin.site.register(shoppingCart)
 # admin.site.register(menu_item)
 admin.site.register(Order)
 admin.site.register(Salad)

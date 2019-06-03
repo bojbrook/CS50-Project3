@@ -83,10 +83,10 @@ def add_user(request):
 
 # view for the place order page, where the user can add items to their cart
 def place_order(request):
-
+    print(topping.objects.filter(item_type="Sub").all())
     context = {
         "toppings": topping.objects.all().order_by("name"),
-        "sub_toppings": topping.objects.filter(item_type="Subs").all(),
+        "sub_toppings": topping.objects.filter(item_type="Sub").all(),
         "sub_no_topping": Sub.objects.exclude(has_toppings=True).values('name','display_name').distinct(),
         "sub_w_topping": Sub.objects.exclude(has_toppings=False).values('name','display_name').distinct(),
         "pastas" : Pasta.objects.all(),
@@ -206,15 +206,28 @@ def create_sub(request, sub_name):
     x_cheese = request.POST.get(x_cheese_str)
 
     try:
+        current_user = request.user
         sub = Sub.objects.get(name=sub_name,item_size=size)
+        shopping_cart = Order.objects.get(user=current_user,has_paid=False)
     except Sub.DoesNotExist:
-        return render(request, "orders/error.html", {"message": "Something went wrong with addint the sub."})
-    
+        return render(request, "orders/error.html", {"message": "Something went wrong with adding the sub."})
+    except Order.DoesNotExist:
+        shopping_cart = Order(user= current_user, order_price = 0.0, has_paid=False)
+        shopping_cart.save()
+    if(sub.has_toppings == True):
+        # print("Sub has toppings")
+        sub_toppings = topping.objects.filter(item_type="Sub").all()
+        for top in sub_toppings:
+            input_name = f"{sub.name}_{top.name}"
+            # checks if box has been checked then modifies the topping
+            if(request.POST.get(input_name)):
+                top.orders.add(shopping_cart)
+                top.food_items.add(sub)
+
     if(x_cheese == 'on'):
         sub.extra_cheese = True
         sub.save()
 
-    # return HttpResponseRedirect(reverse("cart"))
     return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
 
 # Creates a dinner platter and adds it to the shopping cart
@@ -256,7 +269,11 @@ def add_to_cart(request, food_id):
             cheese_topping.food_items.add(sub)
             #add the extra price to the cart
             shopping_cart.order_price += cheese_topping.price
-
+        if(sub.has_toppings):
+            sub_toppings = topping.objects.filter(orders=shopping_cart,food_items=item)
+            for top in sub_toppings:
+                shopping_cart.order_price += top.price
+            
 
     
 
