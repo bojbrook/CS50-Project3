@@ -18,7 +18,7 @@
                 <tr>
                     <td>{{food.item.get_item_type_display}}</td>
                     <td>{{food.item.display_name}}</td>
-                    <td>{{food.item.get_food.get_item_size_display|default:"-"}}</td>
+                    <td>{{food.item.get_food.get_size_display|default:"-"}}</td>
                     
                     {%for top in food.toppings%}
                         <td>{{top.display_name}} + ${{top.price|floatformat:2}}</td>

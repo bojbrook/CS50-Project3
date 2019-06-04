@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from .models import  shoppingCart,Order,topping, Pizza, Salad, Pasta, Dinner_Platter, Sub, Food
+from .models import  shoppingCart,Order,topping, Pizza, Salad, Pasta, Dinner_Platter, Sub, Food, order_item
 from datetime import datetime    
 
 # Create your views here.
@@ -101,30 +101,35 @@ def cart_view(request):
     try:
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
         toppings = topping.objects.filter(orders=shopping_cart)
-        
+        orderItems = order_item.objects.filter(order=shopping_cart)    
     except Order.DoesNotExist:
         shopping_cart = Order(user=current_user)
         shopping_cart.save()
     except topping.DoesNotExist:
         pass
+    except orderItems.DoesNotExist:
+        pass
    
+    # print(orderItems)
     # Gatthering all of the toppings for a specific item
     cart = []
-    for item in shopping_cart.order_items.all():
-        print(item)    
+    for item in orderItems.all():
+        print(item.food)    
         toppings_arr = []
-        item_topping = topping.objects.filter(orders=shopping_cart, food_items = item)
+        item_topping = topping.objects.filter(orders=shopping_cart, food_items=item.food)
         price = 0
         for top in item_topping.all():
             price += top.price
         cart_items = {
-            'item': item,
+            'item': item.food,
             "toppings":item_topping.all(),
             "price": item.price + price
             
         }
         cart.append(cart_items)
     
+    # print(cart)
+
 
     context= {
         "shopping_cart": shopping_cart,
@@ -207,7 +212,7 @@ def create_sub(request, sub_name):
 
     try:
         current_user = request.user
-        sub = Sub.objects.get(name=sub_name,item_size=size)
+        sub = Sub.objects.get(name=sub_name,size=size)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
     except Sub.DoesNotExist:
         return render(request, "orders/error.html", {"message": "Something went wrong with adding the sub."})
@@ -250,12 +255,20 @@ def add_to_cart(request, food_id):
         item = Food.objects.get(pk=food_id)
         # print(item)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
+
+        orderItem = order_item.objects.get(food=item,order=shopping_cart)
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except Order.DoesNotExist:
         shopping_cart = Order(user= current_user, order_price = 0.0, has_paid=False)
         shopping_cart.save()
+    except order_item.DoesNotExist:
+        orderItem = order_item(food=item, order=shopping_cart, price=item.price)
+        orderItem.save()
 
+    print(shopping_cart.order_items.all())
+    
+    
     # if shopping_cart == None:
     #     sc = shoppingCart(user=current_user)
     #     sc.save()
@@ -265,22 +278,17 @@ def add_to_cart(request, food_id):
         sub = Sub.objects.get(pk=food_id)
         if(sub.extra_cheese == True):
             cheese_topping = topping.objects.get(name="Extra_Cheese")
-            cheese_topping.orders.add(shopping_cart)
-            cheese_topping.food_items.add(sub)
+            orderItem.toppings.add(cheese_topping)
             #add the extra price to the cart
-            shopping_cart.order_price += cheese_topping.price
-        if(sub.has_toppings):
-            sub_toppings = topping.objects.filter(orders=shopping_cart,food_items=item)
-            for top in sub_toppings:
-                shopping_cart.order_price += top.price
-            
-
+            orderItem.price += cheese_topping.price
+            orderItem.save()
     
-
-    shopping_cart.order_items.add(item)
-    shopping_cart.order_price += item.price
-    shopping_cart.save()    
-     
+        # if(sub.has_toppings):
+        #     sub_toppings = topping.objects.filter(orders=shopping_cart,food_items=item)
+        #     for top in sub_toppings:
+        #         shopping_cart.order_price += top.price 
+    shopping_cart.order_price += orderItem.price
+    shopping_cart.save()  
     return HttpResponseRedirect(reverse("place_order"))
 
 # function to remove item from cart
@@ -290,26 +298,30 @@ def remove_from_cart(request, food_id):
         current_user = request.user
         item = Food.objects.get(pk=food_id)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
+        orderItem = order_item.objects.get(order=shopping_cart,food=item)
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except Order.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No shopping cart."})
+    except order_item.DoesNotExist:
+        return render(request, "orders/error.html", {"message": "No Item in cart."})
 
 
     # removing the toppings from the cart
-    try:
-        toppings = topping.objects.filter(orders=shopping_cart, food_items = item)
-        for top in toppings:
-            shopping_cart.order_price -= top.price
-            top.orders.remove(shopping_cart)
-            top.food_items.remove(item)
+    # try:
+    #     toppings = topping.objects.filter(orders=shopping_cart, food_items = item)
+    #     for top in toppings:
+    #         shopping_cart.order_price -= top.price
+    #         top.orders.remove(shopping_cart)
+    #         top.food_items.remove(item)
         
-    except:
-        pass
+    # except:
+    #     pass
 
-    new_cart = shopping_cart.order_items.exclude(pk=food_id)
-    shopping_cart.order_items.set(new_cart)
-    shopping_cart.order_price -= item.price
+    # new_cart = shopping_cart.order_items.exclude(pk=food_id)
+    # shopping_cart.order_items.set(new_cart)
+    shopping_cart.order_price -= orderItem.price
+    orderItem.delete()
     shopping_cart.save()
     return HttpResponseRedirect(reverse("cart"))
 

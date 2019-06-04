@@ -20,15 +20,14 @@ class Food(models.Model):
         ('DP', 'Dinner Platters'),
         ('SA', 'Salads'),
         ('PA', 'Pasta'),
-        ('SU', 'Subs'),
+        ('SU', 'Sub'),
         ('PI', 'Pizza'),
     }
     name = models.CharField(max_length=64)
-    display_name = models.CharField(max_length=64)
-    item_type = models.CharField(max_length=2, choices=FOOD_TYPES)
+    display_name = models.CharField(max_length = 64)
     price = models.FloatField()
+    item_type = models.CharField(max_length=2, choices=FOOD_TYPES)
     has_toppings = models.BooleanField(default=False)
-    toppings = models.ManyToManyField("topping",blank=True)
 
     class Meta:
         abstract = False
@@ -76,14 +75,28 @@ class Food(models.Model):
    
     def __str__(self):
         # return self.food_print()
-        return f"{self.name} ${self.price:.2f}"
+        return f"{self.get_item_type_display()} {self.name}"
+
+class order_item(models.Model):
+    SIZES = (
+        ('S', 'Small'),
+        ('L', 'Large'),
+    )
+    food = models.ForeignKey(Food,on_delete=models.CASCADE)
+    order = models.ForeignKey('Order',on_delete=models.CASCADE)
+    price = models.FloatField(default=0.0)
+    toppings = models.ManyToManyField("topping",blank=True)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.food.name} {self.quantity} ${self.price:.2f}"
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     is_completed = models.BooleanField(default=False)
     order_price = models.FloatField(default=0.0)
-    order_items = models.ManyToManyField(Food)
+    order_items = models.ManyToManyField(Food, through=order_item)
     has_paid = models.BooleanField(default=False)
     
     def get_items_str(self):
@@ -141,8 +154,7 @@ class Sub(Food):
         ('S', 'Small'),
         ('L', 'Large'),
     )
-    item_size = models.CharField(max_length=1, choices=SIZES)
-    num_toppings = models.IntegerField(default=0)
+    size = models.CharField(max_length=1, choices=SIZES,blank=True)
     extra_cheese = models.BooleanField(default=False)
 
     def get_extra_charge_total(self):
@@ -161,7 +173,7 @@ class Sub(Food):
     def __str__(self):
         # if(self.has_toppings):
         #     return f"{self.name}: {self.get_toppings_str()} {self.get_item_size_display()} ${self.get_price():.2f}"
-        return f"{self.display_name}: {self.get_item_size_display()} ${self.get_price():.2f} "
+        return f"{self.display_name} {self.get_size_display()} ${self.price:.2f}"
 
 class Salad(Food):
 
