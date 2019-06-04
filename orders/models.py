@@ -139,7 +139,6 @@ class Pizza(Food):
     def set_price(self):
         self.price = self.calculate_price()
     
-
     def calculate_price(self):
         if self.item_size == "L":
             return self.price + (2 * self.num_toppings)

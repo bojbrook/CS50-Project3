@@ -83,7 +83,6 @@ def add_user(request):
 
 # view for the place order page, where the user can add items to their cart
 def place_order(request):
-    print(topping.objects.filter(item_type="Sub").all())
     context = {
         "toppings": topping.objects.all().order_by("name"),
         "sub_toppings": topping.objects.filter(item_type="Sub").all(),
@@ -110,7 +109,6 @@ def cart_view(request):
     except orderItems.DoesNotExist:
         pass
    
-    # print(orderItems)
     # Gatthering all of the toppings for a specific item
     cart = []
     for item in orderItems.all():
@@ -118,14 +116,10 @@ def cart_view(request):
             'item': item.food,
             "toppings":item.toppings.all(),
             "price": item.get_price(),
-            "quantity": item.quantity
-            
+            "quantity": item.quantity     
         }
         cart.append(cart_items)
     
-    # print(cart)
-
-
     context= {
         "shopping_cart": shopping_cart,
         "cart": cart,
@@ -204,31 +198,92 @@ def create_sub(request, sub_name):
         current_user = request.user
         sub = Sub.objects.get(name=sub_name,size=size)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
-        orderItem = order_item.objects.get(food=sub,order=shopping_cart)
+        # orderItem = order_item.objects.filter(food=sub,order=shopping_cart)
     except Sub.DoesNotExist:
         return render(request, "orders/error.html", {"message": "Something went wrong with adding the sub."})
     except Order.DoesNotExist:
         shopping_cart = Order(user= current_user, order_price = 0.0, has_paid=False)
         shopping_cart.save()
-    except order_item.DoesNotExist:
-        orderItem = order_item(food=sub, order=shopping_cart, price=sub.price)
-        orderItem.save()
+  
+    # Getting the Cheese and toppings for each sub
+    current_toppings = []
+    cheese = None
+    if(x_cheese == 'on'):
+        cheese = topping.objects.get(name="Extra_Cheese")
+        mush = topping.objects.get(name='Mushrooms')
+        current_toppings.append(cheese)
     if(sub.has_toppings == True):
         # print("Sub has toppings")
         sub_toppings = topping.objects.filter(item_type="Sub").all()
         for top in sub_toppings:
             input_name = f"{sub.name}_{top.name}"
-            # checks if box has been checked then modifies the topping
+            # checks if box has been checked then modifies the topping 
             if(request.POST.get(input_name)):
-                orderItem.toppings.add(top)
-                orderItem.save()
-
-    if(x_cheese == 'on'):
-        cheese = topping.objects.get(name="Extra_Cheese")
-        orderItem.toppings.add(cheese)
+                current_toppings.append(top)
+    
+    
+    print(f"toppings: {current_toppings}") 
+    # print(cheese)
+    try:
+        if current_toppings:
+            orderItem = order_item.objects.get(food=sub,order=shopping_cart,toppings__in=current_toppings)
+        else:
+            orderItem = order_item.objects.filter(food=sub,order=shopping_cart,toppings=None).first()
+        # orderItem = order_item.objects.get(food=sub,order=shopping_cart, toppings__in=current_toppings)
+        
+        print(f"test: {orderItem}")
+    except order_item.DoesNotExist:
+        orderItem = order_item(food=sub,order =shopping_cart,price=sub.price)
         orderItem.save()
+        orderItem.toppings.set(current_toppings)
+        print("Does not exist")
 
-    return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
+    # print(f"test: {test}")
+    if not orderItem:
+        print("Creating Item")
+        orderItem = order_item(food=sub,order =shopping_cart,price=sub.price)
+        orderItem.save()
+        orderItem.toppings.set(current_toppings)
+        
+
+    print(orderItem)
+    add_food_to_cart(shopping_cart,orderItem)
+    
+    # if(sub.has_toppings == True):
+    #     # print("Sub has toppings")
+    #     sub_toppings = topping.objects.filter(item_type="Sub").all()
+    #     for top in sub_toppings:
+    #         input_name = f"{sub.name}_{top.name}"
+    #         # checks if box has been checked then modifies the topping
+    #         if(request.POST.get(input_name)):
+    #             orderItem.toppings.add(top)
+    #             orderItem.save()
+
+    # if(x_cheese == 'on'):
+    #     cheese = topping.objects.get(name="Extra_Cheese")
+    #     print(orderItem.toppings.all())
+    #     order_topping = orderItem.toppings.all()
+    #     print(f"toppings: {order_topping}")
+    #     if(cheese not in order_topping):
+    #         new_order_item = order_item(food=sub,order=shopping_cart,price=sub.price) 
+    #         new_order_item.save()
+    #         new_order_item.toppings.add(cheese)
+
+
+        # new_order_item = order_item()
+        # cheese = topping.objects.get(name="Extra_Cheese")
+        # orderItem.toppings.add(cheese)
+        # orderItem.save()
+    
+    return HttpResponseRedirect(reverse("place_order"))
+    # return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
+
+def add_food_to_cart(shopping_cart,orderItem):
+    print(f"Adding food {shopping_cart} and {orderItem}")
+    orderItem.quantity += 1
+    orderItem.save()
+    shopping_cart.order_price += (orderItem.get_price())
+    shopping_cart.save() 
 
 # Creates a dinner platter and adds it to the shopping cart
 def create_platter(request, platter_name):
@@ -250,7 +305,7 @@ def add_to_cart(request, food_id):
         item = Food.objects.get(pk=food_id)
         # print(item)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
-        orderItem = order_item.objects.get(food=item,order=shopping_cart)       
+        orderItem = order_item.objects.filter(food=item,order=shopping_cart)       
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except Order.DoesNotExist:
@@ -260,21 +315,22 @@ def add_to_cart(request, food_id):
         orderItem = order_item(food=item, order=shopping_cart, price=item.price)
         orderItem.save()
 
+    print(orderItem)
 
     orderItem.quantity += 1
     orderItem.save()
 
-        # Checking if food is a sub and had toppings
-    if(item.item_type == "SU"):
-        sub = Sub.objects.get(pk=food_id)
-        # if(sub.extra_cheese == True):
-        #     cheese_topping = topping.objects.get(name="Extra_Cheese")
-        #     orderItem.toppings.add(cheese_topping)
-        #     #add the extra price to the cart
-        #     orderItem.save()
+    #     # Checking if food is a sub and had toppings
+    # if(item.item_type == "SU"):
+    #     sub = Sub.objects.get(pk=food_id)
+    #     # if(sub.extra_cheese == True):
+    #     #     cheese_topping = topping.objects.get(name="Extra_Cheese")
+    #     #     orderItem.toppings.add(cheese_topping)
+    #     #     #add the extra price to the cart
+    #     #     orderItem.save()
 
-    # print((orderItem.price * orderItem.quantity))
-    print(orderItem.get_price())
+    # # print((orderItem.price * orderItem.quantity))
+    # print(orderItem.get_price())
     shopping_cart.order_price += (orderItem.get_price())
     shopping_cart.save()  
     return HttpResponseRedirect(reverse("place_order"))
