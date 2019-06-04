@@ -114,16 +114,11 @@ def cart_view(request):
     # Gatthering all of the toppings for a specific item
     cart = []
     for item in orderItems.all():
-        print(item.food)    
-        toppings_arr = []
-        item_topping = topping.objects.filter(orders=shopping_cart, food_items=item.food)
-        price = 0
-        for top in item_topping.all():
-            price += top.price
         cart_items = {
             'item': item.food,
-            "toppings":item_topping.all(),
-            "price": item.price + price
+            "toppings":item.toppings.all(),
+            "price": item.get_price(),
+            "quantity": item.quantity
             
         }
         cart.append(cart_items)
@@ -135,11 +130,6 @@ def cart_view(request):
         "shopping_cart": shopping_cart,
         "cart": cart,
         "toppings": toppings
-        # "cart_subs": shopping_cart.items.filter(item_type="SU").all(),
-        # "cart_pizzas": shopping_cart.items.filter(item_type="PI").all(),
-        # "cart_salads": shopping_cart.items.filter(item_type="SA").all(),
-        # "cart_pasta": shopping_cart.items.filter(item_type="PA").all(),
-        # "cart_dinner_platters": shopping_cart.items.filter(item_type="DP").all(),
     }
     return render(request,"orders/cart.html",context)
 
@@ -214,11 +204,15 @@ def create_sub(request, sub_name):
         current_user = request.user
         sub = Sub.objects.get(name=sub_name,size=size)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
+        orderItem = order_item.objects.get(food=sub,order=shopping_cart)
     except Sub.DoesNotExist:
         return render(request, "orders/error.html", {"message": "Something went wrong with adding the sub."})
     except Order.DoesNotExist:
         shopping_cart = Order(user= current_user, order_price = 0.0, has_paid=False)
         shopping_cart.save()
+    except order_item.DoesNotExist:
+        orderItem = order_item(food=sub, order=shopping_cart, price=sub.price)
+        orderItem.save()
     if(sub.has_toppings == True):
         # print("Sub has toppings")
         sub_toppings = topping.objects.filter(item_type="Sub").all()
@@ -226,12 +220,13 @@ def create_sub(request, sub_name):
             input_name = f"{sub.name}_{top.name}"
             # checks if box has been checked then modifies the topping
             if(request.POST.get(input_name)):
-                top.orders.add(shopping_cart)
-                top.food_items.add(sub)
+                orderItem.toppings.add(top)
+                orderItem.save()
 
     if(x_cheese == 'on'):
-        sub.extra_cheese = True
-        sub.save()
+        cheese = topping.objects.get(name="Extra_Cheese")
+        orderItem.toppings.add(cheese)
+        orderItem.save()
 
     return HttpResponseRedirect(reverse("add_to_cart",kwargs={'food_id':sub.id}))
 
@@ -255,8 +250,7 @@ def add_to_cart(request, food_id):
         item = Food.objects.get(pk=food_id)
         # print(item)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
-
-        orderItem = order_item.objects.get(food=item,order=shopping_cart)
+        orderItem = order_item.objects.get(food=item,order=shopping_cart)       
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except Order.DoesNotExist:
@@ -266,28 +260,22 @@ def add_to_cart(request, food_id):
         orderItem = order_item(food=item, order=shopping_cart, price=item.price)
         orderItem.save()
 
-    print(shopping_cart.order_items.all())
-    
-    
-    # if shopping_cart == None:
-    #     sc = shoppingCart(user=current_user)
-    #     sc.save()
 
-    # Checking if food is a sub and had toppings
+    orderItem.quantity += 1
+    orderItem.save()
+
+        # Checking if food is a sub and had toppings
     if(item.item_type == "SU"):
         sub = Sub.objects.get(pk=food_id)
-        if(sub.extra_cheese == True):
-            cheese_topping = topping.objects.get(name="Extra_Cheese")
-            orderItem.toppings.add(cheese_topping)
-            #add the extra price to the cart
-            orderItem.price += cheese_topping.price
-            orderItem.save()
-    
-        # if(sub.has_toppings):
-        #     sub_toppings = topping.objects.filter(orders=shopping_cart,food_items=item)
-        #     for top in sub_toppings:
-        #         shopping_cart.order_price += top.price 
-    shopping_cart.order_price += orderItem.price
+        # if(sub.extra_cheese == True):
+        #     cheese_topping = topping.objects.get(name="Extra_Cheese")
+        #     orderItem.toppings.add(cheese_topping)
+        #     #add the extra price to the cart
+        #     orderItem.save()
+
+    # print((orderItem.price * orderItem.quantity))
+    print(orderItem.get_price())
+    shopping_cart.order_price += (orderItem.get_price())
     shopping_cart.save()  
     return HttpResponseRedirect(reverse("place_order"))
 
@@ -299,6 +287,7 @@ def remove_from_cart(request, food_id):
         item = Food.objects.get(pk=food_id)
         shopping_cart = Order.objects.get(user=current_user,has_paid=False)
         orderItem = order_item.objects.get(order=shopping_cart,food=item)
+        
     except Food.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No selection."})
     except Order.DoesNotExist:
@@ -306,6 +295,9 @@ def remove_from_cart(request, food_id):
     except order_item.DoesNotExist:
         return render(request, "orders/error.html", {"message": "No Item in cart."})
 
+
+    orderItem.quantity -= 1
+    orderItem.save()
 
     # removing the toppings from the cart
     # try:
@@ -320,8 +312,11 @@ def remove_from_cart(request, food_id):
 
     # new_cart = shopping_cart.order_items.exclude(pk=food_id)
     # shopping_cart.order_items.set(new_cart)
-    shopping_cart.order_price -= orderItem.price
-    orderItem.delete()
+    # print(orderItem.price)
+    shopping_cart.order_price -= (orderItem.get_price())
+    if(orderItem.quantity == 0):
+        orderItem.delete()
+    
     shopping_cart.save()
     return HttpResponseRedirect(reverse("cart"))
 

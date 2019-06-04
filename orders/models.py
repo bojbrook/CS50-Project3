@@ -78,18 +78,20 @@ class Food(models.Model):
         return f"{self.get_item_type_display()} {self.name}"
 
 class order_item(models.Model):
-    SIZES = (
-        ('S', 'Small'),
-        ('L', 'Large'),
-    )
     food = models.ForeignKey(Food,on_delete=models.CASCADE)
     order = models.ForeignKey('Order',on_delete=models.CASCADE)
     price = models.FloatField(default=0.0)
     toppings = models.ManyToManyField("topping",blank=True)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=0)
+
+    def get_price(self):
+        total_price = self.price
+        for top in self.toppings.all():
+            total_price += top.price
+        return total_price
 
     def __str__(self):
-        return f"{self.food.name} {self.quantity} ${self.price:.2f}"
+        return f"{self.food.name} {self.quantity} ${self.get_price():.2f}"
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

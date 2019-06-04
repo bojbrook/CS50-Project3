@@ -12,7 +12,9 @@
                 <th>Name</th>
                 <th>Size</th>
                 <th>Extra charge</th>
+                <th>Quantity</th>
                 <th>Price</th>
+                
             </tr>
             {%for food in cart %}
                 <tr>
@@ -25,6 +27,7 @@
                     {%empty%}
                         <td>-</td>
                     {%endfor%}
+                    <th>{{food.quantity}}</th>
                     <td>${{food.price|floatformat:2}}</td>
                     <!-- {% for top in toppings %}
                         {% for food in top.food_items.all %}
