@@ -32,7 +32,7 @@
                 <option value={{topping.name}}>{{topping}}</option>
             {% endfor %}
         </select>
-        <select name="type">
+        <select name="pizza_type">
                 <option value="R">Regular</option>
                 <option value="S">Sicilian</option>
         </select>
@@ -44,19 +44,6 @@
     </form>
 
     <h1>Subs</h1>
-        <!-- <form >
-            <select name="sub_name">
-                {% for sub in sub_names %}
-                    <option value="{{sub.name}}">{{sub.name}}</option>
-                {% endfor %}
-            </select>
-            <input type="radio" checked=true name="sub_size" value="S"/> Small
-            <input type="radio" name="sub_size" value="L"/> Large
-
-            <input type="checkbox"  name="cb_extra_cheese" /> Extra Cheese + $.50
-            <input type="submit" value="Add to cart" />
-        </form> -->
-
         <table>
             <tr>
                 <th>Name</th>

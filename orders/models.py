@@ -86,8 +86,9 @@ class order_item(models.Model):
 
     def get_price(self):
         total_price = self.price
-        for top in self.toppings.all():
-            total_price += top.price
+        if self.food.item_type != "PI":
+            for top in self.toppings.all():
+                total_price += top.price
         return total_price
 
     def __str__(self):
@@ -134,7 +135,7 @@ class Pizza(Food):
     }
     size = models.CharField(max_length=1, choices=SIZES)
     pizza_type = models.CharField(max_length=1, choices=PIZZA_TYPE)
-    num_toppings = models.IntegerField()
+    num_toppings = models.IntegerField(default=0)
 
     def set_price(self):
         self.price = self.calculate_price()

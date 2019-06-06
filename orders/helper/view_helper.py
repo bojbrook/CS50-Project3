@@ -1,5 +1,12 @@
-from ..models import order_item, topping
+from ..models import order_item, topping, Order
 FILE_NAME = "view_helper:"
+
+def add_item_to_cart(shopping_cart,orderItem):
+    print(f"Adding food {shopping_cart} and {orderItem}")
+    orderItem.quantity += 1
+    orderItem.save()
+    shopping_cart.order_price += (orderItem.get_price())
+    shopping_cart.save() 
 
 # returns true
 def check_order_items(order_filter,used_toppings):
@@ -22,7 +29,7 @@ def check_order_items(order_filter,used_toppings):
             return item
     return None
 
-def create_new_sub(order,food,price,toppings=[]):
+def create_new_sub(order,sub,price,toppings=[]):
     """[summary]
         Creates new order_item for a sub with its given toppings
     Arguments:
@@ -36,7 +43,22 @@ def create_new_sub(order,food,price,toppings=[]):
     Returns:
         [type] -- [description]
     """
-    orderItem = order_item(food=food,order=order,price=price)
+    orderItem = order_item(food=sub,order=order,price=price)
+    orderItem.save()
+    orderItem.toppings.set(toppings)
+    return orderItem
+
+def get_pizza_price(pizza,num_toppings):
+    if pizza.size == "L" :
+        return pizza.price + (2 * num_toppings)
+    else:
+        if num_toppings == 2:
+            return pizza.price + 2.5
+        return pizza.price + (1 * num_toppings) + (.5 * (int)(num_toppings/3))
+
+def create_new_pizza(order,pizza,toppings=[]):
+    price = get_pizza_price(pizza,len(toppings))
+    orderItem = order_item(food=pizza,order=order,price=price)
     orderItem.save()
     orderItem.toppings.set(toppings)
     return orderItem
