@@ -91,7 +91,7 @@ class order_item(models.Model):
         return total_price
 
     def __str__(self):
-        return f"{self.food.name} {self.quantity} ${self.get_price():.2f}"
+        return f"{self.food.name} {self.toppings.all()} {self.quantity} ${self.get_price():.2f}"
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -132,7 +132,7 @@ class Pizza(Food):
         ('R', 'Regular'),
         ('S', 'Sicilian')
     }
-    item_size = models.CharField(max_length=1, choices=SIZES)
+    size = models.CharField(max_length=1, choices=SIZES)
     pizza_type = models.CharField(max_length=1, choices=PIZZA_TYPE)
     num_toppings = models.IntegerField()
 
@@ -140,7 +140,7 @@ class Pizza(Food):
         self.price = self.calculate_price()
     
     def calculate_price(self):
-        if self.item_size == "L":
+        if self.size == "L":
             return self.price + (2 * self.num_toppings)
         else:
             if self.num_toppings == 2:
@@ -148,7 +148,7 @@ class Pizza(Food):
             return self.price + (1 * self.num_toppings) + (.5 * (int)(self.num_toppings/3))
 
     def __str__(self):
-        return f"{self.get_item_type_display()} {self.name} ${self.price:.2f} - {self.get_item_size_display()} {self.get_pizza_type_display()}"
+        return f"{self.get_item_type_display()} {self.name} ${self.price:.2f} - {self.get_size_display()} {self.get_pizza_type_display()}"
 
 class Sub(Food):
     SIZES = (
@@ -191,11 +191,11 @@ class Dinner_Platter(Food):
         ('S', 'Small'),
         ('L', 'Large'),
     )
-    item_size = models.CharField(max_length=1, choices=SIZES)
+    size = models.CharField(max_length=1, choices=SIZES)
 
     def __str__(self):
 
-        return f"{self.display_name}: {self.get_item_size_display()}  ${self.price:.2f}"
+        return f"{self.display_name}: {self.get_size_display()}  ${self.price:.2f}"
 
 class shoppingCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

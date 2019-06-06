@@ -37,7 +37,7 @@
                         {%endfor%}
                     {%endfor%} -->
                     <td>
-                        <form action="{% url 'remove_from_cart' food.item.id %}" method="post">
+                        <form action="{% url 'remove_from_cart' food.id %}" method="post">
                             {% csrf_token %}
                             <input type="submit" value="Remove" />
                         </form>
